@@ -122,6 +122,14 @@ enum DevelopmentStandard {
   @@map("development_standard")
 }
 
+enum PropertyType {
+  RESIDENTIAL
+  COMMERCIAL
+  MIXED_USE
+
+  @@map("property_type")
+}
+
 model Development {
   id        String  @id @default(uuid())
   name      String
@@ -130,6 +138,8 @@ model Development {
 
   status           ConstructionStatus  @default(LAUNCH)
   standard         DevelopmentStandard @default(STANDARD)
+  propertyType     PropertyType        @default(RESIDENTIAL) @map("property_type")
+  floorsCount      Int?                @map("floors_count")
   unitsCount       Int?                @map("units_count")
   startDate        DateTime?           @map("start_date")
   deliveryForecast DateTime?           @map("delivery_forecast")

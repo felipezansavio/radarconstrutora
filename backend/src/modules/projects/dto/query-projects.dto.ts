@@ -1,5 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ConstructionStatus, DevelopmentStandard } from '@prisma/client';
+import {
+  ConstructionStatus,
+  DevelopmentStandard,
+  PropertyType,
+} from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsEnum,
@@ -26,6 +30,11 @@ export class QueryProjectsDto {
   @IsOptional()
   @IsEnum(DevelopmentStandard)
   standard?: DevelopmentStandard;
+
+  @ApiPropertyOptional({ enum: PropertyType })
+  @IsOptional()
+  @IsEnum(PropertyType)
+  propertyType?: PropertyType;
 
   @ApiPropertyOptional({ example: 'São Paulo' })
   @IsOptional()

@@ -1,17 +1,23 @@
+import { AuthGuard } from "@/components/layout/auth-guard";
+import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { Topbar } from "@/components/layout/topbar";
+
 export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-border flex h-14 items-center border-b px-6">
-        <span className="text-sm font-semibold">Radar Construtora IA</span>
-      </header>
-      <div className="flex flex-1">
-        <aside className="border-border hidden w-56 border-r p-4 md:block" />
-        <main className="flex-1 p-6">{children}</main>
+    <AuthGuard>
+      <div className="bg-muted/20 flex min-h-screen">
+        <aside className="bg-background fixed inset-y-0 left-0 z-30 hidden w-64 border-r lg:block">
+          <SidebarNav />
+        </aside>
+        <div className="flex min-h-screen flex-1 flex-col lg:pl-64">
+          <Topbar />
+          <main className="flex-1 p-4 sm:p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

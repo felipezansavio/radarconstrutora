@@ -10,6 +10,11 @@ export interface FindManyBuildersOptions {
   take: number;
 }
 
+export type BuilderListItem = Company & {
+  _count: { developments: number };
+  developments: { aiScore: number | null }[];
+};
+
 @Injectable()
 export class BuildersRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -32,7 +37,7 @@ export class BuildersRepository {
 
   async findMany(
     options: FindManyBuildersOptions,
-  ): Promise<{ data: Company[]; total: number }> {
+  ): Promise<{ data: BuilderListItem[]; total: number }> {
     const where = this.buildWhere(options);
 
     const [data, total] = await this.prisma.$transaction([
@@ -41,6 +46,13 @@ export class BuildersRepository {
         skip: options.skip,
         take: options.take,
         orderBy: { name: 'asc' },
+        include: {
+          _count: { select: { developments: true } },
+          developments: {
+            select: { aiScore: true },
+            take: 50,
+          },
+        },
       }),
       this.prisma.company.count({ where }),
     ]);

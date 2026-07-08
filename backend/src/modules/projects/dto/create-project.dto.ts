@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ConstructionStatus, DevelopmentStandard } from '@prisma/client';
+import {
+  ConstructionStatus,
+  DevelopmentStandard,
+  PropertyType,
+} from '@prisma/client';
 import {
   IsDateString,
   IsEnum,
@@ -33,11 +37,22 @@ export class CreateProjectDto {
   @IsEnum(DevelopmentStandard)
   standard?: DevelopmentStandard;
 
+  @ApiPropertyOptional({ enum: PropertyType, default: 'RESIDENTIAL' })
+  @IsOptional()
+  @IsEnum(PropertyType)
+  propertyType?: PropertyType;
+
   @ApiPropertyOptional({ example: 120 })
   @IsOptional()
   @IsInt()
   @IsPositive()
   unitsCount?: number;
+
+  @ApiPropertyOptional({ example: 12 })
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  floorsCount?: number;
 
   @ApiPropertyOptional({ example: '2026-01-15' })
   @IsOptional()

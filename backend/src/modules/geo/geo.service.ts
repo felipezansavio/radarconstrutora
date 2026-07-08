@@ -3,6 +3,7 @@ import {
   ConstructionStatus,
   DevelopmentStandard,
   Prisma,
+  PropertyType,
 } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 
@@ -22,6 +23,10 @@ export interface NearbyDevelopment {
   companyId: string;
   status: string;
   standard: string;
+  propertyType: string;
+  floorsCount: number | null;
+  unitsCount: number | null;
+  aiScore: number | null;
   city: string | null;
   state: string | null;
   latitude: number | null;
@@ -32,6 +37,8 @@ export interface NearbyDevelopment {
 export interface NearbyDevelopmentsFilters {
   status?: ConstructionStatus;
   standard?: DevelopmentStandard;
+  propertyType?: PropertyType;
+  minFloors?: number;
 }
 
 @Injectable()
@@ -73,7 +80,7 @@ export class GeoService {
   /**
    * Busca empreendimentos dentro de um raio (em km) a partir de um ponto,
    * ordenados do mais próximo para o mais distante. Aceita filtros opcionais
-   * de status da obra e padrão do empreendimento.
+   * de status da obra, padrão, tipo de imóvel e número mínimo de pavimentos.
    */
   async findDevelopmentsNearby(
     latitude: number,
@@ -95,6 +102,16 @@ export class GeoService {
       );
     }
 
+    if (filters.propertyType) {
+      conditions.push(
+        Prisma.sql`AND property_type = ${filters.propertyType}::"property_type"`,
+      );
+    }
+
+    if (filters.minFloors) {
+      conditions.push(Prisma.sql`AND floors_count >= ${filters.minFloors}`);
+    }
+
     const extraConditions =
       conditions.length > 0 ? Prisma.join(conditions, ' ') : Prisma.empty;
 
@@ -105,6 +122,10 @@ export class GeoService {
         company_id AS "companyId",
         status,
         standard,
+        property_type AS "propertyType",
+        floors_count AS "floorsCount",
+        units_count AS "unitsCount",
+        ai_score AS "aiScore",
         city,
         state,
         latitude,

@@ -4,6 +4,7 @@ import {
   Development,
   DevelopmentStandard,
   Prisma,
+  PropertyType,
 } from '@prisma/client';
 import { PrismaService } from '../../../database/prisma.service';
 
@@ -11,11 +12,16 @@ export interface FindManyProjectsOptions {
   companyId?: string;
   status?: ConstructionStatus;
   standard?: DevelopmentStandard;
+  propertyType?: PropertyType;
   city?: string;
   state?: string;
   skip: number;
   take: number;
 }
+
+const projectInclude = {
+  company: { select: { id: true, name: true } },
+} satisfies Prisma.DevelopmentInclude;
 
 @Injectable()
 export class ProjectsRepository {
@@ -28,6 +34,7 @@ export class ProjectsRepository {
       companyId: options.companyId,
       status: options.status,
       standard: options.standard,
+      propertyType: options.propertyType,
       city: options.city
         ? { equals: options.city, mode: 'insensitive' }
         : undefined,
@@ -37,9 +44,7 @@ export class ProjectsRepository {
     };
   }
 
-  async findMany(
-    options: FindManyProjectsOptions,
-  ): Promise<{ data: Development[]; total: number }> {
+  async findMany(options: FindManyProjectsOptions) {
     const where = this.buildWhere(options);
 
     const [data, total] = await this.prisma.$transaction([
@@ -48,6 +53,7 @@ export class ProjectsRepository {
         skip: options.skip,
         take: options.take,
         orderBy: { createdAt: 'desc' },
+        include: projectInclude,
       }),
       this.prisma.development.count({ where }),
     ]);
@@ -56,18 +62,25 @@ export class ProjectsRepository {
   }
 
   findById(id: string): Promise<Development | null> {
-    return this.prisma.development.findUnique({ where: { id } });
+    return this.prisma.development.findUnique({
+      where: { id },
+      include: projectInclude,
+    });
   }
 
-  create(data: Prisma.DevelopmentCreateInput): Promise<Development> {
-    return this.prisma.development.create({ data });
+  create(data: Prisma.DevelopmentCreateInput) {
+    return this.prisma.development.create({
+      data,
+      include: projectInclude,
+    });
   }
 
-  update(
-    id: string,
-    data: Prisma.DevelopmentUpdateInput,
-  ): Promise<Development> {
-    return this.prisma.development.update({ where: { id }, data });
+  update(id: string, data: Prisma.DevelopmentUpdateInput) {
+    return this.prisma.development.update({
+      where: { id },
+      data,
+      include: projectInclude,
+    });
   }
 
   delete(id: string): Promise<Development> {

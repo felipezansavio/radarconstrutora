@@ -1,12 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ConstructionStatus, DevelopmentStandard } from '@prisma/client';
+import {
+  ConstructionStatus,
+  DevelopmentStandard,
+  PropertyType,
+} from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsIn,
+  IsInt,
   IsLatitude,
   IsLongitude,
   IsOptional,
+  IsPositive,
   Max,
   Min,
 } from 'class-validator';
@@ -47,4 +53,19 @@ export class RadiusSearchDto {
   @IsOptional()
   @IsEnum(DevelopmentStandard)
   standard?: DevelopmentStandard;
+
+  @ApiPropertyOptional({ enum: PropertyType })
+  @IsOptional()
+  @IsEnum(PropertyType)
+  propertyType?: PropertyType;
+
+  @ApiPropertyOptional({
+    example: 5,
+    description: 'Número mínimo de pavimentos',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  minFloors?: number;
 }

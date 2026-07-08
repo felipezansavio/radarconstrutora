@@ -12,7 +12,16 @@ export class SearchService {
   ) {}
 
   async searchByRadius(dto: RadiusSearchDto, currentUser: AuthenticatedUser) {
-    const { latitude, longitude, radiusKm, type, status, standard } = dto;
+    const {
+      latitude,
+      longitude,
+      radiusKm,
+      type,
+      status,
+      standard,
+      propertyType,
+      minFloors,
+    } = dto;
 
     const [builders, projects] = await Promise.all([
       type === 'projects'
@@ -24,7 +33,7 @@ export class SearchService {
             latitude,
             longitude,
             radiusKm,
-            { status, standard },
+            { status, standard, propertyType, minFloors },
           ),
     ]);
 
@@ -36,7 +45,7 @@ export class SearchService {
       latitude,
       longitude,
       radiusKm,
-      filters: { type, status, standard },
+      filters: { type, status, standard, propertyType, minFloors },
       resultsCount,
     });
 
