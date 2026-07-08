@@ -27,6 +27,7 @@ model Tenant {
   leads         Lead[]
   searches      Search[]
   notifications Notification[]
+  aiInteractions AiInteraction[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -57,6 +58,7 @@ model User {
   searches      Search[]
   notifications Notification[]
   refreshTokens RefreshToken[]
+  aiInteractions AiInteraction[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -94,6 +96,7 @@ model Company {
 
   developments Development[]
   leads        Lead[]
+  aiInteractions AiInteraction[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -162,7 +165,8 @@ model Development {
 
   photos String[] @default([])
 
-  leads Lead[]
+  leads          Lead[]
+  aiInteractions AiInteraction[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -214,7 +218,8 @@ model Lead {
   commercialStatus LeadStatus      @default(NEW) @map("commercial_status")
   notes            String?
 
-  interactions Interaction[]
+  interactions   Interaction[]
+  aiInteractions AiInteraction[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -331,4 +336,49 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Inteligência artificial: histórico de análises, classificações e chat
+// ---------------------------------------------------------------------------
+
+enum AiInteractionType {
+  DEVELOPMENT_SCORE
+  COMPANY_ANALYSIS
+  LEAD_CLASSIFICATION
+  APPROACH_WHATSAPP
+  APPROACH_EMAIL
+  APPROACH_CALL
+  CHAT
+
+  @@map("ai_interaction_type")
+}
+
+model AiInteraction {
+  id   String            @id @default(uuid())
+  type AiInteractionType
+
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  userId String? @map("user_id")
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  companyId String?  @map("company_id")
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  developmentId String?      @map("development_id")
+  development   Development? @relation(fields: [developmentId], references: [id], onDelete: SetNull)
+
+  leadId String? @map("lead_id")
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  prompt   String?
+  response Json
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([tenantId, type])
+  @@map("ai_interactions")
 }

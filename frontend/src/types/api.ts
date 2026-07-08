@@ -37,6 +37,17 @@ export type NotificationType =
   | "INTERACTION_CREATED"
   | "SYSTEM";
 
+export type AiInteractionType =
+  | "DEVELOPMENT_SCORE"
+  | "COMPANY_ANALYSIS"
+  | "LEAD_CLASSIFICATION"
+  | "APPROACH_WHATSAPP"
+  | "APPROACH_EMAIL"
+  | "APPROACH_CALL"
+  | "CHAT";
+
+export type ApproachChannel = "WHATSAPP" | "EMAIL" | "CALL";
+
 export interface PaginatedResult<T> {
   data: T[];
   meta: {
@@ -262,4 +273,47 @@ export interface IngestionSourceStatus {
   name: string;
   configured: boolean;
   description: string;
+}
+
+export interface CompanyAnalysisResult {
+  resumoComercial: string;
+  potencialCompra: "ALTO" | "MEDIO" | "BAIXO";
+  perfilConstrutora: string;
+  estrategiaAbordagem: string;
+}
+
+export interface LeadClassificationResult {
+  lead: Lead;
+  reasoning: string;
+}
+
+export interface ApproachResult {
+  subject: string | null;
+  content: string;
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ChatResult {
+  reply: string;
+}
+
+export interface AiHistoryEntry {
+  id: string;
+  type: AiInteractionType;
+  tenantId: string;
+  userId: string | null;
+  companyId: string | null;
+  developmentId: string | null;
+  leadId: string | null;
+  prompt: string | null;
+  response: Record<string, unknown>;
+  createdAt: string;
+  company: { id: string; name: string } | null;
+  development: { id: string; name: string } | null;
+  lead: { id: string } | null;
+  user: { id: string; name: string } | null;
 }

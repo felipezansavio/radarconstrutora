@@ -1,4 +1,5 @@
 import {
+  Bot,
   Building2,
   Home,
   KanbanSquare,
@@ -24,5 +25,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Construtoras", href: "/builders", icon: Landmark },
   { label: "Empreendimentos", href: "/projects", icon: Building2 },
   { label: "CRM", href: "/leads", icon: KanbanSquare },
+  { label: "Assistente IA", href: "/assistant", icon: Bot },
   { label: "Configurações", href: "/settings/team", icon: Settings },
 ];

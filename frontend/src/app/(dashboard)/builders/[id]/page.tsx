@@ -11,6 +11,7 @@ import {
   Phone,
 } from "lucide-react";
 
+import { CompanyAnalysisPanel } from "@/components/builders/company-analysis-panel";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { LoadingState } from "@/components/shared/loading-state";
@@ -85,6 +86,8 @@ export default function BuilderDetailPage({
           )}
         </CardContent>
       </Card>
+
+      <CompanyAnalysisPanel companyId={id} />
 
       <div>
         <h2 className="mb-3 text-lg font-semibold">Empreendimentos</h2>

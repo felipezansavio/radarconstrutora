@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Copy, MessageCircle, Phone, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { useClassifyLead, useGenerateApproach } from "@/hooks/use-ai";
 import {
   useCreateInteraction,
   useLeadInteractions,
@@ -32,7 +34,20 @@ import {
   LEAD_STATUS_LABELS,
   LEAD_TEMPERATURE_LABELS,
 } from "@/lib/labels";
-import type { InteractionType, Lead, LeadStatus, LeadTemperature } from "@/types/api";
+import type {
+  ApproachChannel,
+  ApproachResult,
+  InteractionType,
+  Lead,
+  LeadStatus,
+  LeadTemperature,
+} from "@/types/api";
+
+const APPROACH_CHANNELS: { value: ApproachChannel; label: string }[] = [
+  { value: "WHATSAPP", label: "WhatsApp" },
+  { value: "EMAIL", label: "E-mail" },
+  { value: "CALL", label: "Ligação" },
+];
 
 const INTERACTION_TYPE_LABELS: Record<InteractionType, string> = {
   CALL: "Ligação",
@@ -53,12 +68,65 @@ export function LeadDetailSheet({
   const [message, setMessage] = useState("");
   const [interactionType, setInteractionType] =
     useState<InteractionType>("NOTE");
+  const [approachChannel, setApproachChannel] =
+    useState<ApproachChannel>("WHATSAPP");
+  const [approach, setApproach] = useState<ApproachResult | null>(null);
 
   const { data: interactions, isLoading } = useLeadInteractions(lead?.id);
   const createInteraction = useCreateInteraction(lead?.id ?? "");
   const updateLead = useUpdateLead();
+  const classifyLead = useClassifyLead();
+  const generateApproach = useGenerateApproach();
+
+  useEffect(() => {
+    setApproach(null);
+  }, [lead?.id]);
 
   if (!lead) return null;
+
+  function handleClassify() {
+    if (!lead) return;
+    classifyLead.mutate(lead.id, {
+      onSuccess: (result) => {
+        toast.success("Lead classificado pela IA", {
+          description: result.reasoning,
+        });
+      },
+      onError: (error) => {
+        const msg =
+          error instanceof ApiError
+            ? error.message
+            : "Não foi possível classificar o lead.";
+        toast.error(msg);
+      },
+    });
+  }
+
+  function handleGenerateApproach() {
+    if (!lead) return;
+    generateApproach.mutate(
+      { leadId: lead.id, channel: approachChannel },
+      {
+        onSuccess: (result) => setApproach(result),
+        onError: (error) => {
+          const msg =
+            error instanceof ApiError
+              ? error.message
+              : "Não foi possível gerar a abordagem.";
+          toast.error(msg);
+        },
+      },
+    );
+  }
+
+  function handleCopyApproach() {
+    if (!approach) return;
+    const text = approach.subject
+      ? `${approach.subject}\n\n${approach.content}`
+      : approach.content;
+    void navigator.clipboard.writeText(text);
+    toast.success("Copiado para a área de transferência");
+  }
 
   const title = lead.development?.name ?? lead.company?.name ?? "Lead";
 
@@ -160,11 +228,79 @@ export function LeadDetailSheet({
             </div>
           </div>
 
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={handleClassify}
+            disabled={classifyLead.isPending}
+          >
+            <Sparkles />
+            {classifyLead.isPending
+              ? "Classificando..."
+              : "Classificar automaticamente com IA"}
+          </Button>
+
           {lead.notes && (
             <div className="bg-muted/50 rounded-lg border p-3 text-sm">
               {lead.notes}
             </div>
           )}
+
+          <div className="space-y-2 border-t pt-3">
+            <h4 className="text-sm font-semibold">Gerar abordagem</h4>
+            <Select
+              value={approachChannel}
+              onValueChange={(v) => setApproachChannel(v as ApproachChannel)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {APPROACH_CHANNELS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={handleGenerateApproach}
+              disabled={generateApproach.isPending}
+            >
+              {approachChannel === "CALL" ? (
+                <Phone />
+              ) : approachChannel === "WHATSAPP" ? (
+                <MessageCircle />
+              ) : (
+                <Sparkles />
+              )}
+              {generateApproach.isPending ? "Gerando..." : "Gerar abordagem"}
+            </Button>
+
+            {approach && (
+              <div className="bg-muted/50 space-y-2 rounded-lg border p-3 text-sm">
+                {approach.subject && (
+                  <div className="font-medium">{approach.subject}</div>
+                )}
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  {approach.content}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyApproach}
+                  className="w-full"
+                >
+                  <Copy />
+                  Copiar
+                </Button>
+              </div>
+            )}
+          </div>
 
           <div>
             <h4 className="mb-2 text-sm font-semibold">Histórico</h4>

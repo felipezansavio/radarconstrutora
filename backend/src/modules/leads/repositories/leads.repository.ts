@@ -13,13 +13,19 @@ export interface FindManyLeadsOptions {
   take: number;
 }
 
+export type LeadWithRelations = Lead & {
+  company: { id: string; name: string } | null;
+  development: { id: string; name: string } | null;
+  owner: { id: string; name: string; email: string } | null;
+};
+
 @Injectable()
 export class LeadsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findMany(
     options: FindManyLeadsOptions,
-  ): Promise<{ data: Lead[]; total: number }> {
+  ): Promise<{ data: LeadWithRelations[]; total: number }> {
     const where: Prisma.LeadWhereInput = {
       tenantId: options.tenantId,
       commercialStatus: options.commercialStatus,
