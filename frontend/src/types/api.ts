@@ -221,3 +221,45 @@ export interface RadiusSearchResult {
   projects?: NearbyDevelopmentResult[];
   resultsCount: number;
 }
+
+export type OpportunityTier = "EXCELLENT" | "HIGH" | "MEDIUM" | "LOW";
+
+export interface OpportunityReason {
+  label: string;
+  points: number;
+}
+
+export interface Opportunity {
+  developmentId: string;
+  name: string;
+  companyId: string;
+  companyName: string;
+  companyPhone: string | null;
+  companyEmail: string | null;
+  companyWebsite: string | null;
+  status: ConstructionStatus;
+  standard: DevelopmentStandard;
+  propertyType: PropertyType;
+  floorsCount: number | null;
+  city: string | null;
+  state: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  distanceKm: number;
+  score: number;
+  tier: OpportunityTier;
+  tierLabel: string;
+  reasons: OpportunityReason[];
+}
+
+export interface OpportunitiesResult {
+  opportunities: Opportunity[];
+  resultsCount: number;
+}
+
+export interface IngestionSourceStatus {
+  key: string;
+  name: string;
+  configured: boolean;
+  description: string;
+}

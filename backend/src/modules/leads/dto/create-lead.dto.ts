@@ -1,27 +1,22 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { LeadTemperature } from '@prisma/client';
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsUUID,
-  ValidateIf,
-} from 'class-validator';
+import { IsEnum, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { IsUuidLike } from '../../../common/validators/is-uuid-like.decorator';
 
 export class CreateLeadDto {
   @ApiPropertyOptional({ example: '00000000-0000-0000-0000-000000000101' })
   @ValidateIf((dto: CreateLeadDto) => !dto.developmentId)
-  @IsUUID()
+  @IsUuidLike()
   companyId?: string;
 
   @ApiPropertyOptional({ example: '00000000-0000-0000-0000-000000000201' })
   @IsOptional()
-  @IsUUID()
+  @IsUuidLike()
   developmentId?: string;
 
   @ApiPropertyOptional({ example: '00000000-0000-0000-0000-000000000003' })
   @IsOptional()
-  @IsUUID()
+  @IsUuidLike()
   ownerId?: string;
 
   @ApiPropertyOptional({ enum: LeadTemperature, default: 'WARM' })

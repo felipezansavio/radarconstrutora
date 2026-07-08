@@ -26,6 +26,11 @@ export const envSchema = z.object({
   MAPBOX_ACCESS_TOKEN: z.string().optional(),
   GOOGLE_MAPS_API_KEY: z.string().optional(),
 
+  GOOGLE_PLACES_API_KEY: z.string().optional(),
+  NEWS_API_KEY: z.string().optional(),
+  REAL_ESTATE_PORTAL_API_KEY: z.string().optional(),
+  REAL_ESTATE_PORTAL_BASE_URL: z.string().optional(),
+
   THROTTLE_TTL: z.coerce.number().default(60),
   THROTTLE_LIMIT: z.coerce.number().default(100),
 });

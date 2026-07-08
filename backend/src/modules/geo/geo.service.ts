@@ -39,6 +39,7 @@ export interface NearbyDevelopment {
   zipCode: string | null;
   latitude: number | null;
   longitude: number | null;
+  startDate: Date | null;
   deliveryForecast: Date | null;
   photos: string[];
   distanceKm: number;
@@ -158,6 +159,7 @@ export class GeoService {
         d.zip_code AS "zipCode",
         d.latitude,
         d.longitude,
+        d.start_date AS "startDate",
         d.delivery_forecast AS "deliveryForecast",
         d.photos,
         ST_Distance(

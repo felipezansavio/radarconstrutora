@@ -31,6 +31,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { ProjectsModule } from './modules/projects/projects.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SearchModule } from './modules/search/search.module';
+import { SearchEngineModule } from './modules/search-engine/search-engine.module';
 import { UsersModule } from './modules/users/users.module';
 import { QueueModule } from './queue/queue.module';
 
@@ -67,6 +68,7 @@ import { QueueModule } from './queue/queue.module';
     BuildersModule,
     ProjectsModule,
     SearchModule,
+    SearchEngineModule,
     LeadsModule,
     CrmModule,
     AiModule,

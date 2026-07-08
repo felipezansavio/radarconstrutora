@@ -1,7 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { LeadStatus, LeadTemperature } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsUuidLike } from '../../../common/validators/is-uuid-like.decorator';
 
 export class QueryLeadsDto {
   @ApiPropertyOptional({ enum: LeadStatus })
@@ -16,17 +17,17 @@ export class QueryLeadsDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsUuidLike()
   companyId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsUuidLike()
   developmentId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsUuidLike()
   ownerId?: string;
 
   @ApiPropertyOptional({ default: 1 })

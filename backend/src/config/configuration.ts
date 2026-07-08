@@ -32,6 +32,13 @@ export default () => ({
     googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
   },
 
+  ingestion: {
+    googlePlacesApiKey: process.env.GOOGLE_PLACES_API_KEY,
+    newsApiKey: process.env.NEWS_API_KEY,
+    realEstatePortalApiKey: process.env.REAL_ESTATE_PORTAL_API_KEY,
+    realEstatePortalBaseUrl: process.env.REAL_ESTATE_PORTAL_BASE_URL,
+  },
+
   throttle: {
     ttl: parseInt(process.env.THROTTLE_TTL ?? '60', 10),
     limit: parseInt(process.env.THROTTLE_LIMIT ?? '100', 10),

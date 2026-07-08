@@ -5,20 +5,13 @@ import {
   PropertyType,
 } from '@prisma/client';
 import { Type } from 'class-transformer';
-import {
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsUuidLike } from '../../../common/validators/is-uuid-like.decorator';
 
 export class QueryProjectsDto {
   @ApiPropertyOptional({ example: '00000000-0000-0000-0000-000000000101' })
   @IsOptional()
-  @IsUUID()
+  @IsUuidLike()
   companyId?: string;
 
   @ApiPropertyOptional({ enum: ConstructionStatus })

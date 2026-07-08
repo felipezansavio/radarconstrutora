@@ -6,6 +6,7 @@ import {
   MapPinned,
   Search,
   Settings,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -18,6 +19,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
   { label: "Buscar oportunidades", href: "/search", icon: Search },
+  { label: "Oportunidades", href: "/opportunities", icon: Sparkles },
   { label: "Mapa", href: "/map", icon: MapPinned },
   { label: "Construtoras", href: "/builders", icon: Landmark },
   { label: "Empreendimentos", href: "/projects", icon: Building2 },

@@ -14,8 +14,8 @@ import {
   IsOptional,
   IsPositive,
   IsString,
-  IsUUID,
 } from 'class-validator';
+import { IsUuidLike } from '../../../common/validators/is-uuid-like.decorator';
 
 export class CreateProjectDto {
   @ApiProperty({ example: 'Edifício Horizonte Ipiranga' })
@@ -24,7 +24,7 @@ export class CreateProjectDto {
   name!: string;
 
   @ApiProperty({ example: '00000000-0000-0000-0000-000000000101' })
-  @IsUUID()
+  @IsUuidLike()
   companyId!: string;
 
   @ApiPropertyOptional({ enum: ConstructionStatus })
