@@ -3,11 +3,20 @@
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Copy, MessageCircle, Phone, Sparkles } from "lucide-react";
+import {
+  Calendar,
+  Copy,
+  MessageCircle,
+  Phone,
+  Plus,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -29,7 +38,9 @@ import {
   useLeadInteractions,
   useUpdateLead,
 } from "@/hooks/use-leads";
+import { useCreateTask, useTasks, useUpdateTask } from "@/hooks/use-tasks";
 import { ApiError } from "@/lib/api/client";
+import { formatDate } from "@/lib/format";
 import {
   LEAD_STATUS_LABELS,
   LEAD_TEMPERATURE_LABELS,
@@ -41,6 +52,7 @@ import type {
   Lead,
   LeadStatus,
   LeadTemperature,
+  TaskType,
 } from "@/types/api";
 
 const APPROACH_CHANNELS: { value: ApproachChannel; label: string }[] = [
@@ -58,6 +70,13 @@ const INTERACTION_TYPE_LABELS: Record<InteractionType, string> = {
   STATUS_CHANGE: "Mudança de status",
 };
 
+const TASK_TYPE_LABELS: Record<TaskType, string> = {
+  VISIT: "Visita",
+  CALL: "Ligação",
+  FOLLOW_UP: "Follow-up",
+  OTHER: "Outro",
+};
+
 export function LeadDetailSheet({
   lead,
   onOpenChange,
@@ -71,15 +90,26 @@ export function LeadDetailSheet({
   const [approachChannel, setApproachChannel] =
     useState<ApproachChannel>("WHATSAPP");
   const [approach, setApproach] = useState<ApproachResult | null>(null);
+  const [taskType, setTaskType] = useState<TaskType>("FOLLOW_UP");
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskDueAt, setTaskDueAt] = useState("");
 
   const { data: interactions, isLoading } = useLeadInteractions(lead?.id);
   const createInteraction = useCreateInteraction(lead?.id ?? "");
   const updateLead = useUpdateLead();
   const classifyLead = useClassifyLead();
   const generateApproach = useGenerateApproach();
+  const { data: tasks, isLoading: tasksLoading } = useTasks(
+    { leadId: lead?.id },
+    { enabled: Boolean(lead?.id) },
+  );
+  const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
 
   useEffect(() => {
     setApproach(null);
+    setTaskTitle("");
+    setTaskDueAt("");
   }, [lead?.id]);
 
   if (!lead) return null;
@@ -126,6 +156,36 @@ export function LeadDetailSheet({
       : approach.content;
     void navigator.clipboard.writeText(text);
     toast.success("Copiado para a área de transferência");
+  }
+
+  function handleCreateTask() {
+    if (!lead || !taskTitle.trim() || !taskDueAt) return;
+    createTask.mutate(
+      {
+        leadId: lead.id,
+        title: taskTitle,
+        type: taskType,
+        dueAt: new Date(taskDueAt).toISOString(),
+      },
+      {
+        onSuccess: () => {
+          setTaskTitle("");
+          setTaskDueAt("");
+          toast.success("Tarefa criada");
+        },
+        onError: (error) => {
+          const msg =
+            error instanceof ApiError
+              ? error.message
+              : "Não foi possível criar a tarefa.";
+          toast.error(msg);
+        },
+      },
+    );
+  }
+
+  function handleToggleTaskCompleted(taskId: string, completed: boolean) {
+    updateTask.mutate({ id: taskId, payload: { completed } });
   }
 
   const title = lead.development?.name ?? lead.company?.name ?? "Lead";
@@ -300,6 +360,94 @@ export function LeadDetailSheet({
                 </Button>
               </div>
             )}
+          </div>
+
+          <div className="space-y-2 border-t pt-3">
+            <h4 className="text-sm font-semibold">Tarefas</h4>
+
+            {tasksLoading && (
+              <p className="text-muted-foreground text-xs">Carregando...</p>
+            )}
+
+            <div className="space-y-2">
+              {tasks?.map((task) => (
+                <div
+                  key={task.id}
+                  className="flex items-start gap-2 rounded-md border p-2 text-sm"
+                >
+                  <Checkbox
+                    checked={Boolean(task.completedAt)}
+                    onCheckedChange={(checked) =>
+                      handleToggleTaskCompleted(task.id, checked === true)
+                    }
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <div
+                      className={
+                        task.completedAt
+                          ? "text-muted-foreground line-through"
+                          : ""
+                      }
+                    >
+                      {task.title}
+                    </div>
+                    <div className="text-muted-foreground flex items-center gap-1 text-xs">
+                      <Badge variant="outline" className="h-4 px-1 text-[10px]">
+                        {TASK_TYPE_LABELS[task.type]}
+                      </Badge>
+                      <Calendar className="size-3" />
+                      {formatDate(task.dueAt)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {!tasksLoading && (tasks?.length ?? 0) === 0 && (
+                <p className="text-muted-foreground text-xs">
+                  Nenhuma tarefa registrada ainda.
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Select
+                value={taskType}
+                onValueChange={(v) => setTaskType(v as TaskType)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(TASK_TYPE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                type="datetime-local"
+                value={taskDueAt}
+                onChange={(e) => setTaskDueAt(e.target.value)}
+              />
+            </div>
+            <Input
+              placeholder="Título da tarefa..."
+              value={taskTitle}
+              onChange={(e) => setTaskTitle(e.target.value)}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={handleCreateTask}
+              disabled={
+                createTask.isPending || !taskTitle.trim() || !taskDueAt
+              }
+            >
+              <Plus />
+              {createTask.isPending ? "Criando..." : "Nova tarefa"}
+            </Button>
           </div>
 
           <div>

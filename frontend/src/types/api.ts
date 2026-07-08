@@ -17,8 +17,9 @@ export type LeadTemperature = "COLD" | "WARM" | "HOT";
 export type LeadStatus =
   | "NEW"
   | "CONTACTED"
-  | "NEGOTIATING"
+  | "VISIT_SCHEDULED"
   | "PROPOSAL_SENT"
+  | "NEGOTIATING"
   | "WON"
   | "LOST";
 
@@ -29,6 +30,8 @@ export type InteractionType =
   | "MEETING"
   | "NOTE"
   | "STATUS_CHANGE";
+
+export type TaskType = "VISIT" | "CALL" | "FOLLOW_UP" | "OTHER";
 
 export type NotificationType =
   | "LEAD_ASSIGNED"
@@ -151,18 +154,64 @@ export interface LeadRef {
   name: string;
 }
 
+export interface LeadCompanyRef extends LeadRef {
+  phone: string | null;
+  email: string | null;
+}
+
+export interface LeadDevelopmentRef extends LeadRef {
+  aiScore: number | null;
+  unitsCount: number | null;
+}
+
+export interface LeadLastInteraction {
+  id: string;
+  type: InteractionType;
+  message: string | null;
+  createdAt: string;
+}
+
+export interface LeadNextTask {
+  id: string;
+  type: TaskType;
+  title: string;
+  dueAt: string;
+}
+
 export interface Lead {
   id: string;
   tenantId: string;
   companyId: string | null;
-  company: LeadRef | null;
+  company: LeadCompanyRef | null;
   developmentId: string | null;
-  development: LeadRef | null;
+  development: LeadDevelopmentRef | null;
   ownerId: string | null;
   owner: { id: string; name: string; email: string } | null;
   temperature: LeadTemperature;
   commercialStatus: LeadStatus;
   notes: string | null;
+  lastInteraction: LeadLastInteraction | null;
+  nextTask: LeadNextTask | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Task {
+  id: string;
+  tenantId: string;
+  leadId: string | null;
+  lead: {
+    id: string;
+    company: LeadRef | null;
+    development: LeadRef | null;
+  } | null;
+  assigneeId: string | null;
+  assignee: { id: string; name: string } | null;
+  type: TaskType;
+  title: string;
+  notes: string | null;
+  dueAt: string;
+  completedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -32,6 +32,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SearchModule } from './modules/search/search.module';
 import { SearchEngineModule } from './modules/search-engine/search-engine.module';
+import { TasksModule } from './modules/tasks/tasks.module';
 import { UsersModule } from './modules/users/users.module';
 import { QueueModule } from './queue/queue.module';
 
@@ -71,6 +72,7 @@ import { QueueModule } from './queue/queue.module';
     SearchEngineModule,
     LeadsModule,
     CrmModule,
+    TasksModule,
     AiModule,
     NotificationsModule,
     IngestionModule,

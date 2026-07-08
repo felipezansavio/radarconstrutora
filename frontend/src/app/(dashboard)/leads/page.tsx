@@ -5,16 +5,14 @@ import { toast } from "sonner";
 
 import { LeadColumn } from "@/components/leads/lead-column";
 import { LeadDetailSheet } from "@/components/leads/lead-detail-sheet";
-import { LeadFormDialog } from "@/components/leads/lead-form-dialog";
 import { ErrorState } from "@/components/shared/error-state";
 import { LoadingState } from "@/components/shared/loading-state";
-import { PageHeader } from "@/components/shared/page-header";
 import { useLeads, useUpdateLead } from "@/hooks/use-leads";
 import { ApiError } from "@/lib/api/client";
 import { LEAD_STATUS_LABELS, LEAD_STATUS_ORDER } from "@/lib/labels";
 import type { Lead, LeadStatus } from "@/types/api";
 
-export default function LeadsPage() {
+export default function LeadsKanbanPage() {
   const { data, isLoading, isError, error, refetch } = useLeads({
     pageSize: 100,
   });
@@ -54,12 +52,6 @@ export default function LeadsPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader
-        title="CRM"
-        description="Acompanhe o funil comercial de leads em andamento."
-        actions={<LeadFormDialog />}
-      />
-
       {isError && <ErrorState error={error} onRetry={() => refetch()} />}
       {isLoading && <LoadingState label="Carregando leads..." />}
 

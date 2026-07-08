@@ -1,6 +1,6 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Filter } from "lucide-react";
 
 import {
@@ -19,19 +19,10 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import type { LeadStatus } from "@/types/api";
 
-// Ramp ordinal (um único hue, do mais claro ao mais escuro) para representar
-// o progresso das etapas do funil comercial.
-const FUNNEL_RAMP: Record<LeadStatus, string> = {
-  NEW: "#86b6ef",
-  CONTACTED: "#6da7ec",
-  NEGOTIATING: "#5598e7",
-  PROPOSAL_SENT: "#3987e5",
-  WON: "#256abf",
-  LOST: "#184f95",
-};
-
+// Etapas do funil = uma única série (contagem de leads), então um único hue
+// (slot categórico 1) identifica a série; a ordem já vem do eixo X.
 const chartConfig = {
-  total: { label: "Leads" },
+  total: { label: "Leads", color: "var(--color-chart-1)" },
 } satisfies ChartConfig;
 
 export function ConversionFunnelChart({
@@ -65,11 +56,11 @@ export function ConversionFunnelChart({
               />
               <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
               <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-              <Bar dataKey="total" radius={[4, 4, 0, 0]}>
-                {data.map((entry) => (
-                  <Cell key={entry.status} fill={FUNNEL_RAMP[entry.status]} />
-                ))}
-              </Bar>
+              <Bar
+                dataKey="total"
+                fill="var(--color-total)"
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ChartContainer>
         )}

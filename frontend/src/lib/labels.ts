@@ -36,19 +36,21 @@ export const LEAD_TEMPERATURE_LABELS: Record<LeadTemperature, string> = {
 };
 
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
-  NEW: "Novo",
-  CONTACTED: "Contatado",
-  NEGOTIATING: "Negociando",
+  NEW: "Novo Lead",
+  CONTACTED: "Contato realizado",
+  VISIT_SCHEDULED: "Visita agendada",
   PROPOSAL_SENT: "Proposta enviada",
-  WON: "Ganho",
+  NEGOTIATING: "Negociação",
+  WON: "Fechado",
   LOST: "Perdido",
 };
 
 export const LEAD_STATUS_ORDER: LeadStatus[] = [
   "NEW",
   "CONTACTED",
-  "NEGOTIATING",
+  "VISIT_SCHEDULED",
   "PROPOSAL_SENT",
+  "NEGOTIATING",
   "WON",
   "LOST",
 ];
