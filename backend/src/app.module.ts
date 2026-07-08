@@ -1,30 +1,32 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 import configuration from './config/configuration';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './database/prisma.module';
 import { HealthModule } from './health/health.module';
-import { QueueModule } from './queue/queue.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { TenantsModule } from './modules/tenants/tenants.module';
-import { CompaniesModule } from './modules/companies/companies.module';
-import { DevelopmentsModule } from './modules/developments/developments.module';
-import { GeoModule } from './modules/geo/geo.module';
-import { IngestionModule } from './modules/ingestion/ingestion.module';
-import { AiScoringModule } from './modules/ai-scoring/ai-scoring.module';
-import { LeadsModule } from './modules/leads/leads.module';
-import { ActivitiesModule } from './modules/activities/activities.module';
-import { NotificationsModule } from './modules/notifications/notifications.module';
-import { BillingModule } from './modules/billing/billing.module';
-import { ReportsModule } from './modules/reports/reports.module';
+import { AiModule } from './modules/ai/ai.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { BillingModule } from './modules/billing/billing.module';
+import { BuildersModule } from './modules/builders/builders.module';
+import { CompaniesModule } from './modules/companies/companies.module';
+import { CrmModule } from './modules/crm/crm.module';
+import { IngestionModule } from './modules/ingestion/ingestion.module';
+import { LeadsModule } from './modules/leads/leads.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ProjectsModule } from './modules/projects/projects.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { SearchModule } from './modules/search/search.module';
+import { UsersModule } from './modules/users/users.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
@@ -55,15 +57,15 @@ import { AuditModule } from './modules/audit/audit.module';
     HealthModule,
     AuthModule,
     UsersModule,
-    TenantsModule,
     CompaniesModule,
-    DevelopmentsModule,
-    GeoModule,
-    IngestionModule,
-    AiScoringModule,
+    BuildersModule,
+    ProjectsModule,
+    SearchModule,
     LeadsModule,
-    ActivitiesModule,
+    CrmModule,
+    AiModule,
     NotificationsModule,
+    IngestionModule,
     BillingModule,
     ReportsModule,
     AuditModule,
@@ -72,6 +74,8 @@ import { AuditModule } from './modules/audit/audit.module';
   providers: [
     AppService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
   ],
 })

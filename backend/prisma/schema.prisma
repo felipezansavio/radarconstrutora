@@ -23,9 +23,10 @@ model Tenant {
   phone   String?
   website String?
 
-  users    User[]
-  leads    Lead[]
-  searches Search[]
+  users         User[]
+  leads         Lead[]
+  searches      Search[]
+  notifications Notification[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -51,9 +52,10 @@ model User {
   tenantId String @map("tenant_id")
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  leads        Lead[]        @relation("LeadOwner")
-  interactions Interaction[] @relation("InteractionAuthor")
-  searches     Search[]
+  leads         Lead[]         @relation("LeadOwner")
+  interactions  Interaction[]  @relation("InteractionAuthor")
+  searches      Search[]
+  notifications Notification[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -262,4 +264,39 @@ model Search {
 
   @@index([tenantId])
   @@map("searches")
+}
+
+// ---------------------------------------------------------------------------
+// Notificações internas da plataforma
+// ---------------------------------------------------------------------------
+
+enum NotificationType {
+  LEAD_ASSIGNED
+  LEAD_STATUS_CHANGED
+  LEAD_CREATED
+  INTERACTION_CREATED
+  SYSTEM
+
+  @@map("notification_type")
+}
+
+model Notification {
+  id       String           @id @default(uuid())
+  type     NotificationType @default(SYSTEM)
+  title    String
+  message  String?
+  read     Boolean          @default(false)
+  metadata Json?
+
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([userId, read])
+  @@map("notifications")
 }

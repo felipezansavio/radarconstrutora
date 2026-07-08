@@ -1,0 +1,50 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ConstructionStatus, DevelopmentStandard } from '@prisma/client';
+import { Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsIn,
+  IsLatitude,
+  IsLongitude,
+  IsOptional,
+  Max,
+  Min,
+} from 'class-validator';
+
+export type SearchTarget = 'builders' | 'projects' | 'all';
+
+export class RadiusSearchDto {
+  @ApiProperty({ example: -23.5613 })
+  @Type(() => Number)
+  @IsLatitude()
+  latitude!: number;
+
+  @ApiProperty({ example: -46.6565 })
+  @Type(() => Number)
+  @IsLongitude()
+  longitude!: number;
+
+  @ApiProperty({ example: 10, description: 'Raio de busca em quilômetros' })
+  @Type(() => Number)
+  @Min(0.1)
+  @Max(200)
+  radiusKm!: number;
+
+  @ApiPropertyOptional({
+    enum: ['builders', 'projects', 'all'],
+    default: 'all',
+  })
+  @IsOptional()
+  @IsIn(['builders', 'projects', 'all'])
+  type: SearchTarget = 'all';
+
+  @ApiPropertyOptional({ enum: ConstructionStatus })
+  @IsOptional()
+  @IsEnum(ConstructionStatus)
+  status?: ConstructionStatus;
+
+  @ApiPropertyOptional({ enum: DevelopmentStandard })
+  @IsOptional()
+  @IsEnum(DevelopmentStandard)
+  standard?: DevelopmentStandard;
+}
