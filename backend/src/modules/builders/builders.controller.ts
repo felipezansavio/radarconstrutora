@@ -39,14 +39,14 @@ export class BuildersController {
   }
 
   @Post()
-  @Roles('ADMIN', 'MANAGER')
+  @Roles('ADMIN', 'GESTOR')
   @ApiOperation({ summary: 'Cadastra uma nova construtora' })
   create(@Body() dto: CreateBuilderDto) {
     return this.buildersService.create(dto);
   }
 
   @Patch(':id')
-  @Roles('ADMIN', 'MANAGER')
+  @Roles('ADMIN', 'GESTOR')
   @ApiOperation({ summary: 'Atualiza os dados de uma construtora' })
   update(@Param('id') id: string, @Body() dto: UpdateBuilderDto) {
     return this.buildersService.update(id, dto);

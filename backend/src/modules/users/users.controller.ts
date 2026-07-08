@@ -1,7 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user.interface';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
@@ -15,6 +25,15 @@ export class UsersController {
   @ApiOperation({ summary: 'Lista os usuários da empresa do usuário logado' })
   findAll(@CurrentUser() user: AuthenticatedUser) {
     return this.usersService.findAllForTenant(user.tenantId);
+  }
+
+  @Post()
+  @Roles('ADMIN')
+  @ApiOperation({
+    summary: 'Cadastra um novo usuário na empresa (somente admin)',
+  })
+  create(@Body() dto: CreateUserDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.usersService.create(dto, user);
   }
 
   @Get('me')

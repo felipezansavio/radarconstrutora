@@ -16,6 +16,7 @@ export const envSchema = z.object({
 
   JWT_SECRET: z.string().min(16),
   JWT_ACCESS_TOKEN_TTL: z.string().default('15m'),
+  JWT_REFRESH_SECRET: z.string().min(16),
   JWT_REFRESH_TOKEN_TTL: z.string().default('7d'),
 
   OPENAI_API_KEY: z.string().optional(),

@@ -39,14 +39,14 @@ export class ProjectsController {
   }
 
   @Post()
-  @Roles('ADMIN', 'MANAGER')
+  @Roles('ADMIN', 'GESTOR')
   @ApiOperation({ summary: 'Cadastra um novo empreendimento' })
   create(@Body() dto: CreateProjectDto) {
     return this.projectsService.create(dto);
   }
 
   @Patch(':id')
-  @Roles('ADMIN', 'MANAGER')
+  @Roles('ADMIN', 'GESTOR')
   @ApiOperation({ summary: 'Atualiza os dados de um empreendimento' })
   update(@Param('id') id: string, @Body() dto: UpdateProjectDto) {
     return this.projectsService.update(id, dto);

@@ -17,6 +17,9 @@ yarn-error.log*
 # prisma
 /generated
 
+# redis local dump (dev)
+dump.rdb
+
 # IDE
 .vscode/*
 !.vscode/settings.json

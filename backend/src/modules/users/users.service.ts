@@ -1,12 +1,17 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import bcrypt from 'bcryptjs';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user.interface';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UsersRepository } from './repositories/users.repository';
+
+const SALT_ROUNDS = 10;
 
 @Injectable()
 export class UsersService {
@@ -15,6 +20,32 @@ export class UsersService {
   async findAllForTenant(tenantId: string): Promise<UserResponseDto[]> {
     const users = await this.usersRepository.findManyByTenant(tenantId);
     return users.map((user) => UserResponseDto.fromEntity(user));
+  }
+
+  /**
+   * Cadastra um novo usuário dentro da empresa do administrador logado.
+   */
+  async create(
+    dto: CreateUserDto,
+    currentUser: AuthenticatedUser,
+  ): Promise<UserResponseDto> {
+    const existing = await this.usersRepository.findByEmail(dto.email);
+
+    if (existing) {
+      throw new ConflictException('Já existe um usuário com este e-mail');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
+
+    const user = await this.usersRepository.create({
+      name: dto.name,
+      email: dto.email,
+      passwordHash,
+      role: dto.role ?? 'VENDEDOR',
+      tenant: { connect: { id: currentUser.tenantId } },
+    });
+
+    return UserResponseDto.fromEntity(user);
   }
 
   async findOneForTenant(
