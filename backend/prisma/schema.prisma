@@ -160,6 +160,8 @@ model Development {
   aiScore   Int?    @map("ai_score")
   aiSummary String? @map("ai_summary")
 
+  photos String[] @default([])
+
   leads Lead[]
 
   createdAt DateTime @default(now()) @map("created_at")

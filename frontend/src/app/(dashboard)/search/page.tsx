@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Building2, Landmark, LocateFixed, SearchIcon } from "lucide-react";
-import { toast } from "sonner";
 
 import { RadiusSelector } from "@/components/search/radius-selector";
 import {
@@ -36,8 +35,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { useLocationSearch } from "@/hooks/use-location-search";
 import { useRadiusSearch } from "@/hooks/use-search";
-import { geocodeAddress } from "@/lib/geocoding";
 import { CONSTRUCTION_STATUS_LABELS } from "@/lib/labels";
 import type { ConstructionStatus } from "@/types/api";
 
@@ -45,73 +44,38 @@ type PropertyFilter = "all" | "RESIDENTIAL" | "COMMERCIAL";
 type ResultType = "all" | "builders" | "projects";
 
 export default function SearchPage() {
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
+  const {
+    city,
+    setCity,
+    state,
+    setState,
+    zipCode,
+    setZipCode,
+    latitude,
+    setLatitude,
+    longitude,
+    setLongitude,
+    locationLabel,
+    geocoding,
+    useBrowserLocation,
+    resolveCoordinates,
+  } = useLocationSearch();
   const [radiusKm, setRadiusKm] = useState(10);
   const [propertyFilter, setPropertyFilter] = useState<PropertyFilter>("all");
   const [highEndOnly, setHighEndOnly] = useState(false);
   const [minFloors, setMinFloors] = useState("");
   const [status, setStatus] = useState<ConstructionStatus | "all">("all");
   const [resultType, setResultType] = useState<ResultType>("all");
-  const [geocoding, setGeocoding] = useState(false);
-  const [locationLabel, setLocationLabel] = useState<string | null>(null);
 
   const radiusSearch = useRadiusSearch();
 
-  function useBrowserLocation() {
-    if (!navigator.geolocation) {
-      toast.error("Seu navegador não suporta geolocalização.");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLatitude(String(position.coords.latitude));
-        setLongitude(String(position.coords.longitude));
-        setLocationLabel("Minha localização atual");
-      },
-      () => toast.error("Não foi possível obter sua localização."),
-    );
-  }
-
   async function handleSearch() {
-    let lat = latitude ? Number(latitude) : undefined;
-    let lng = longitude ? Number(longitude) : undefined;
-
-    if ((!lat || !lng) && (city || zipCode)) {
-      setGeocoding(true);
-      const query = [zipCode, city, state, "Brasil"].filter(Boolean).join(", ");
-      let geo = null;
-      try {
-        geo = await geocodeAddress(query);
-      } catch {
-        geo = null;
-      } finally {
-        setGeocoding(false);
-      }
-      if (!geo) {
-        toast.error(
-          "Não foi possível localizar esse endereço. Tente informar as coordenadas diretamente.",
-        );
-        return;
-      }
-      lat = geo.latitude;
-      lng = geo.longitude;
-      setLatitude(String(geo.latitude));
-      setLongitude(String(geo.longitude));
-      setLocationLabel(geo.label);
-    }
-
-    if (!lat || !lng) {
-      toast.error("Informe uma cidade, CEP ou coordenadas para buscar.");
-      return;
-    }
+    const location = await resolveCoordinates();
+    if (!location) return;
 
     radiusSearch.mutate({
-      latitude: lat,
-      longitude: lng,
+      latitude: location.latitude,
+      longitude: location.longitude,
       radiusKm,
       type: resultType,
       status: status === "all" ? undefined : status,

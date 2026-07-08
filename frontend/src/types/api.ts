@@ -193,16 +193,26 @@ export interface NearbyDevelopmentResult {
   id: string;
   name: string;
   companyId: string;
+  companyName: string;
+  companyPhone: string | null;
+  companyEmail: string | null;
+  companyWebsite: string | null;
   status: ConstructionStatus;
   standard: DevelopmentStandard;
   propertyType: PropertyType;
   floorsCount: number | null;
   unitsCount: number | null;
   aiScore: number | null;
+  aiSummary: string | null;
+  addressLine: string | null;
+  neighborhood: string | null;
   city: string | null;
   state: string | null;
+  zipCode: string | null;
   latitude: number | null;
   longitude: number | null;
+  deliveryForecast: string | null;
+  photos: string[];
   distanceKm: number;
 }
 

@@ -21,16 +21,26 @@ export interface NearbyDevelopment {
   id: string;
   name: string;
   companyId: string;
+  companyName: string;
+  companyPhone: string | null;
+  companyEmail: string | null;
+  companyWebsite: string | null;
   status: string;
   standard: string;
   propertyType: string;
   floorsCount: number | null;
   unitsCount: number | null;
   aiScore: number | null;
+  aiSummary: string | null;
+  addressLine: string | null;
+  neighborhood: string | null;
   city: string | null;
   state: string | null;
+  zipCode: string | null;
   latitude: number | null;
   longitude: number | null;
+  deliveryForecast: Date | null;
+  photos: string[];
   distanceKm: number;
 }
 
@@ -39,6 +49,8 @@ export interface NearbyDevelopmentsFilters {
   standard?: DevelopmentStandard;
   propertyType?: PropertyType;
   minFloors?: number;
+  minScore?: number;
+  maxScore?: number;
 }
 
 @Injectable()
@@ -92,24 +104,32 @@ export class GeoService {
 
     if (filters.status) {
       conditions.push(
-        Prisma.sql`AND status = ${filters.status}::"construction_status"`,
+        Prisma.sql`AND d.status = ${filters.status}::"construction_status"`,
       );
     }
 
     if (filters.standard) {
       conditions.push(
-        Prisma.sql`AND standard = ${filters.standard}::"development_standard"`,
+        Prisma.sql`AND d.standard = ${filters.standard}::"development_standard"`,
       );
     }
 
     if (filters.propertyType) {
       conditions.push(
-        Prisma.sql`AND property_type = ${filters.propertyType}::"property_type"`,
+        Prisma.sql`AND d.property_type = ${filters.propertyType}::"property_type"`,
       );
     }
 
     if (filters.minFloors) {
-      conditions.push(Prisma.sql`AND floors_count >= ${filters.minFloors}`);
+      conditions.push(Prisma.sql`AND d.floors_count >= ${filters.minFloors}`);
+    }
+
+    if (filters.minScore !== undefined) {
+      conditions.push(Prisma.sql`AND d.ai_score >= ${filters.minScore}`);
+    }
+
+    if (filters.maxScore !== undefined) {
+      conditions.push(Prisma.sql`AND d.ai_score <= ${filters.maxScore}`);
     }
 
     const extraConditions =
@@ -117,27 +137,38 @@ export class GeoService {
 
     return this.prisma.$queryRaw<NearbyDevelopment[]>`
       SELECT
-        id,
-        name,
-        company_id AS "companyId",
-        status,
-        standard,
-        property_type AS "propertyType",
-        floors_count AS "floorsCount",
-        units_count AS "unitsCount",
-        ai_score AS "aiScore",
-        city,
-        state,
-        latitude,
-        longitude,
+        d.id,
+        d.name,
+        d.company_id AS "companyId",
+        c.name AS "companyName",
+        c.phone AS "companyPhone",
+        c.email AS "companyEmail",
+        c.website AS "companyWebsite",
+        d.status,
+        d.standard,
+        d.property_type AS "propertyType",
+        d.floors_count AS "floorsCount",
+        d.units_count AS "unitsCount",
+        d.ai_score AS "aiScore",
+        d.ai_summary AS "aiSummary",
+        d.address_line AS "addressLine",
+        d.neighborhood,
+        d.city,
+        d.state,
+        d.zip_code AS "zipCode",
+        d.latitude,
+        d.longitude,
+        d.delivery_forecast AS "deliveryForecast",
+        d.photos,
         ST_Distance(
-          location,
+          d.location,
           ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography
         ) / 1000 AS "distanceKm"
-      FROM developments
-      WHERE location IS NOT NULL
+      FROM developments d
+      JOIN companies c ON c.id = d.company_id
+      WHERE d.location IS NOT NULL
         AND ST_DWithin(
-          location,
+          d.location,
           ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography,
           ${radiusKm} * 1000
         )

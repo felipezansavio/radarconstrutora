@@ -68,4 +68,26 @@ export class RadiusSearchDto {
   @IsInt()
   @IsPositive()
   minFloors?: number;
+
+  @ApiPropertyOptional({
+    example: 70,
+    description: 'Nota mínima de potencial comercial (0-100) dada pela IA',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  minScore?: number;
+
+  @ApiPropertyOptional({
+    example: 100,
+    description: 'Nota máxima de potencial comercial (0-100) dada pela IA',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  maxScore?: number;
 }

@@ -15,6 +15,8 @@ export interface RadiusSearchParams {
   standard?: DevelopmentStandard;
   propertyType?: PropertyType;
   minFloors?: number;
+  minScore?: number;
+  maxScore?: number;
 }
 
 export const searchApi = {

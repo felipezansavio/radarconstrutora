@@ -21,6 +21,8 @@ export class SearchService {
       standard,
       propertyType,
       minFloors,
+      minScore,
+      maxScore,
     } = dto;
 
     const [builders, projects] = await Promise.all([
@@ -33,7 +35,7 @@ export class SearchService {
             latitude,
             longitude,
             radiusKm,
-            { status, standard, propertyType, minFloors },
+            { status, standard, propertyType, minFloors, minScore, maxScore },
           ),
     ]);
 
@@ -45,7 +47,15 @@ export class SearchService {
       latitude,
       longitude,
       radiusKm,
-      filters: { type, status, standard, propertyType, minFloors },
+      filters: {
+        type,
+        status,
+        standard,
+        propertyType,
+        minFloors,
+        minScore,
+        maxScore,
+      },
       resultsCount,
     });
 

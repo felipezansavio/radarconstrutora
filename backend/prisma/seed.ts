@@ -176,6 +176,10 @@ async function main() {
       aiScore: 82,
       aiSummary:
         'Empreendimento de alto padrão em fase de lançamento, região com forte demanda por esquadrias premium.',
+      photos: [
+        'https://picsum.photos/seed/horizonte-ipiranga-1/640/480',
+        'https://picsum.photos/seed/horizonte-ipiranga-2/640/480',
+      ],
     },
     {
       id: '00000000-0000-0000-0000-000000000202',
@@ -196,6 +200,7 @@ async function main() {
       aiScore: 68,
       aiSummary:
         'Obra em fase de estrutura, janela de venda de esquadrias em 6-9 meses.',
+      photos: ['https://picsum.photos/seed/jardim-horizonte-1/640/480'],
     },
     {
       id: '00000000-0000-0000-0000-000000000203',
@@ -216,6 +221,11 @@ async function main() {
       aiScore: 75,
       aiSummary:
         'Grande volume de unidades, alto potencial de venda por escala.',
+      photos: [
+        'https://picsum.photos/seed/vale-verde-1/640/480',
+        'https://picsum.photos/seed/vale-verde-2/640/480',
+        'https://picsum.photos/seed/vale-verde-3/640/480',
+      ],
     },
     {
       id: '00000000-0000-0000-0000-000000000204',
@@ -236,6 +246,7 @@ async function main() {
       aiScore: 58,
       aiSummary:
         'Fase de acabamento avançada, janela de venda de esquadrias reduzida.',
+      photos: ['https://picsum.photos/seed/moema-prime-1/640/480'],
     },
     {
       id: '00000000-0000-0000-0000-000000000205',
@@ -256,6 +267,10 @@ async function main() {
       aiScore: 71,
       aiSummary:
         'Alto volume de unidades econômicas, oportunidade por escala de fornecimento.',
+      photos: [
+        'https://picsum.photos/seed/tatuape-garden-1/640/480',
+        'https://picsum.photos/seed/tatuape-garden-2/640/480',
+      ],
     },
     {
       id: '00000000-0000-0000-0000-000000000206',
@@ -276,6 +291,7 @@ async function main() {
       aiScore: 20,
       aiSummary:
         'Empreendimento já entregue, baixo potencial comercial para novas vendas.',
+      photos: ['https://picsum.photos/seed/santo-amaro-business-1/640/480'],
     },
   ];
 
