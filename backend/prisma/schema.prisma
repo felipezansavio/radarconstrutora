@@ -1,0 +1,22 @@
+// Schema base do projeto Radar Construtora IA.
+// Os modelos de domínio (Companies, Developments, Leads, etc.) serão
+// adicionados nas próximas etapas de desenvolvimento.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [postgis]
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("tenants")
+}
