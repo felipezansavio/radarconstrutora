@@ -1,6 +1,4 @@
-// Schema base do projeto Radar Construtora IA.
-// Os modelos de domínio (Companies, Developments, Leads, etc.) serão
-// adicionados nas próximas etapas de desenvolvimento.
+// Schema de dados do Radar Construtora IA.
 
 generator client {
   provider        = "prisma-client-js"
@@ -12,11 +10,256 @@ datasource db {
   extensions = [postgis]
 }
 
+// ---------------------------------------------------------------------------
+// Empresa cliente do SaaS (tenant) e usuários
+// ---------------------------------------------------------------------------
+
+/// Empresa cliente da plataforma (ex.: uma fábrica de esquadrias).
 model Tenant {
-  id        String   @id @default(uuid())
-  name      String
+  id      String  @id @default(uuid())
+  name    String
+  segment String? @map("segment")
+  email   String?
+  phone   String?
+  website String?
+
+  users    User[]
+  leads    Lead[]
+  searches Search[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("tenants")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  SALES_REP
+
+  @@map("user_role")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(SALES_REP)
+
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  leads        Lead[]        @relation("LeadOwner")
+  interactions Interaction[] @relation("InteractionAuthor")
+  searches     Search[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Construtoras e empreendimentos (dados de prospecção)
+// ---------------------------------------------------------------------------
+
+model Company {
+  id          String  @id @default(uuid())
+  name        String
+  cnpj        String? @unique
+  phone       String?
+  email       String?
+  website     String?
+  socialLinks Json?   @map("social_links")
+
+  addressLine  String? @map("address_line")
+  neighborhood String?
+  city         String?
+  state        String?
+  zipCode      String? @map("zip_code")
+  country      String  @default("BR")
+
+  latitude  Float?
+  longitude Float?
+  /// Coluna geográfica (geography(Point, 4326)) mantida em sincronia com
+  /// latitude/longitude por trigger no banco (ver migration). Usada para
+  /// consultas de distância com PostGIS (ST_DWithin / ST_Distance).
+  location  Unsupported("geography(Point, 4326)")?
+
+  developments Development[]
+  leads        Lead[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([city, state])
+  @@map("companies")
+}
+
+enum ConstructionStatus {
+  LAUNCH
+  FOUNDATION
+  STRUCTURE
+  FINISHING
+  DELIVERED
+  ON_HOLD
+
+  @@map("construction_status")
+}
+
+enum DevelopmentStandard {
+  ECONOMIC
+  STANDARD
+  HIGH_END
+  LUXURY
+
+  @@map("development_standard")
+}
+
+model Development {
+  id        String  @id @default(uuid())
+  name      String
+  companyId String  @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  status           ConstructionStatus  @default(LAUNCH)
+  standard         DevelopmentStandard @default(STANDARD)
+  unitsCount       Int?                @map("units_count")
+  startDate        DateTime?           @map("start_date")
+  deliveryForecast DateTime?           @map("delivery_forecast")
+
+  addressLine  String? @map("address_line")
+  neighborhood String?
+  city         String?
+  state        String?
+  zipCode      String? @map("zip_code")
+  country      String  @default("BR")
+
+  latitude  Float?
+  longitude Float?
+  /// Coluna geográfica (geography(Point, 4326)) mantida em sincronia com
+  /// latitude/longitude por trigger no banco (ver migration).
+  location  Unsupported("geography(Point, 4326)")?
+
+  aiScore   Int?    @map("ai_score")
+  aiSummary String? @map("ai_summary")
+
+  leads Lead[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([companyId])
+  @@index([city, state])
+  @@map("developments")
+}
+
+// ---------------------------------------------------------------------------
+// CRM: leads e interações
+// ---------------------------------------------------------------------------
+
+enum LeadTemperature {
+  COLD
+  WARM
+  HOT
+
+  @@map("lead_temperature")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  NEGOTIATING
+  PROPOSAL_SENT
+  WON
+  LOST
+
+  @@map("lead_status")
+}
+
+model Lead {
+  id String @id @default(uuid())
+
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  companyId String?  @map("company_id")
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  developmentId String?      @map("development_id")
+  development   Development? @relation(fields: [developmentId], references: [id], onDelete: SetNull)
+
+  ownerId String? @map("owner_id")
+  owner   User?   @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  temperature      LeadTemperature @default(WARM)
+  commercialStatus LeadStatus      @default(NEW) @map("commercial_status")
+  notes            String?
+
+  interactions Interaction[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([tenantId, commercialStatus])
+  @@map("leads")
+}
+
+enum InteractionType {
+  CALL
+  EMAIL
+  WHATSAPP
+  MEETING
+  NOTE
+  STATUS_CHANGE
+
+  @@map("interaction_type")
+}
+
+model Interaction {
+  id String @id @default(uuid())
+
+  leadId String @map("lead_id")
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  authorId String? @map("author_id")
+  author   User?   @relation("InteractionAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  type     InteractionType
+  message  String?
+  metadata Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([leadId])
+  @@map("interactions")
+}
+
+// ---------------------------------------------------------------------------
+// Pesquisas (histórico de buscas por raio no radar)
+// ---------------------------------------------------------------------------
+
+model Search {
+  id String @id @default(uuid())
+
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  userId String? @map("user_id")
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  latitude     Float
+  longitude    Float
+  radiusKm     Float @map("radius_km")
+  filters      Json?
+  resultsCount Int?  @map("results_count")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@map("searches")
 }
