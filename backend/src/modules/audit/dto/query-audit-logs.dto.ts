@@ -1,0 +1,36 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsUuidLike } from '../../../common/validators/is-uuid-like.decorator';
+
+export class QueryAuditLogsDto {
+  @ApiPropertyOptional({ example: 'Lead' })
+  @IsOptional()
+  @IsString()
+  entity?: string;
+
+  @ApiPropertyOptional({ example: 'LEAD_STATUS_CHANGED' })
+  @IsOptional()
+  @IsString()
+  action?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUuidLike()
+  userId?: string;
+
+  @ApiPropertyOptional({ default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page: number = 1;
+
+  @ApiPropertyOptional({ default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  pageSize: number = 20;
+}

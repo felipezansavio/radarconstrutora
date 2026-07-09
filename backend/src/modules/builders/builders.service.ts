@@ -63,6 +63,6 @@ export class BuildersService {
 
   async remove(id: string) {
     await this.findOne(id);
-    await this.buildersRepository.delete(id);
+    await this.buildersRepository.softDelete(id);
   }
 }

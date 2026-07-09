@@ -23,6 +23,7 @@ export class BuildersRepository {
     options: Pick<FindManyBuildersOptions, 'city' | 'state' | 'name'>,
   ): Prisma.CompanyWhereInput {
     return {
+      deletedAt: null,
       city: options.city
         ? { equals: options.city, mode: 'insensitive' }
         : undefined,
@@ -61,9 +62,10 @@ export class BuildersRepository {
   }
 
   findById(id: string): Promise<Company | null> {
-    return this.prisma.company.findUnique({ where: { id } });
+    return this.prisma.company.findFirst({ where: { id, deletedAt: null } });
   }
 
+  /** Inclui construtoras removidas: o CNPJ permanece único no banco. */
   findByCnpj(cnpj: string): Promise<Company | null> {
     return this.prisma.company.findUnique({ where: { cnpj } });
   }
@@ -76,7 +78,11 @@ export class BuildersRepository {
     return this.prisma.company.update({ where: { id }, data });
   }
 
-  delete(id: string): Promise<Company> {
-    return this.prisma.company.delete({ where: { id } });
+  /** Exclusão lógica — preserva empreendimentos e leads associados. */
+  softDelete(id: string): Promise<Company> {
+    return this.prisma.company.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 }

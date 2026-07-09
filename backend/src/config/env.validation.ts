@@ -45,6 +45,11 @@ export const envSchema = z.object({
 
   THROTTLE_TTL: z.coerce.number().default(60),
   THROTTLE_LIMIT: z.coerce.number().default(100),
+
+  // Protege /api/docs com autenticação básica. Sem as duas variáveis
+  // definidas, os docs ficam expostos só fora de produção.
+  SWAGGER_USER: z.string().optional(),
+  SWAGGER_PASSWORD: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

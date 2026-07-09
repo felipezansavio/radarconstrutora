@@ -414,7 +414,7 @@ export class AiService {
       : 'Nenhum lead cadastrado ainda.';
 
     const topDevelopments = await this.prisma.development.findMany({
-      where: { aiScore: { not: null } },
+      where: { aiScore: { not: null }, deletedAt: null },
       orderBy: { aiScore: 'desc' },
       take: 10,
       include: { company: { select: { name: true } } },

@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, VERSION_NEUTRAL, Version } from '@nestjs/common';
 import {
   HealthCheck,
   HealthCheckService,
@@ -16,6 +16,8 @@ export class HealthController {
   ) {}
 
   @Public()
+  /** Sem prefixo de versão — usado por load balancers/orquestradores. */
+  @Version(VERSION_NEUTRAL)
   @Get()
   @HealthCheck()
   check() {

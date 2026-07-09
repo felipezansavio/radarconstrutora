@@ -22,6 +22,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
+  @Roles('ADMIN', 'GESTOR')
   @ApiOperation({ summary: 'Lista os usuários da empresa do usuário logado' })
   findAll(@CurrentUser() user: AuthenticatedUser) {
     return this.usersService.findAllForTenant(user.tenantId);
@@ -43,6 +44,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @Roles('ADMIN', 'GESTOR')
   @ApiOperation({ summary: 'Busca um usuário da empresa por id' })
   findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.usersService.findOneForTenant(id, user.tenantId);
@@ -59,7 +61,8 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Remove um usuário da empresa' })
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Remove um usuário da empresa (somente admin)' })
   remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.usersService.remove(id, user);
   }

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { AuditService } from '../audit/audit.service';
 import { buildPaginatedResult } from '../../common/dto/paginated-result.dto';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user.interface';
 import { BuildersRepository } from '../builders/repositories/builders.repository';
@@ -10,6 +15,9 @@ import { QueryLeadsDto } from './dto/query-leads.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { LeadsRepository } from './repositories/leads.repository';
 
+/** Perfis com visão completa dos leads da empresa (não só os próprios). */
+const FULL_VISIBILITY_ROLES = ['ADMIN', 'GESTOR'];
+
 @Injectable()
 export class LeadsService {
   constructor(
@@ -18,13 +26,21 @@ export class LeadsService {
     private readonly projectsRepository: ProjectsRepository,
     private readonly usersRepository: UsersRepository,
     private readonly notificationsService: NotificationsService,
+    private readonly auditService: AuditService,
   ) {}
 
   async findAll(query: QueryLeadsDto, currentUser: AuthenticatedUser) {
     const { page, pageSize, ...filters } = query;
 
+    // Um vendedor só enxerga os próprios leads — mesmo que tente filtrar
+    // por ownerId de outra pessoa, o filtro é sobrescrito para o próprio id.
+    const ownerId = FULL_VISIBILITY_ROLES.includes(currentUser.role)
+      ? filters.ownerId
+      : currentUser.userId;
+
     const { data, total } = await this.leadsRepository.findMany({
       ...filters,
+      ownerId,
       tenantId: currentUser.tenantId,
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -40,7 +56,23 @@ export class LeadsService {
       throw new NotFoundException('Lead não encontrado');
     }
 
+    this.assertCanAccessLead(lead.ownerId, currentUser);
+
     return lead;
+  }
+
+  private assertCanAccessLead(
+    ownerId: string | null,
+    currentUser: AuthenticatedUser,
+  ) {
+    if (
+      !FULL_VISIBILITY_ROLES.includes(currentUser.role) &&
+      ownerId !== currentUser.userId
+    ) {
+      throw new ForbiddenException(
+        'Você só pode acessar leads dos quais é responsável',
+      );
+    }
   }
 
   private async assertOwnerBelongsToTenant(ownerId: string, tenantId: string) {
@@ -74,6 +106,16 @@ export class LeadsService {
     }
 
     const ownerId = dto.ownerId ?? currentUser.userId;
+
+    if (
+      !FULL_VISIBILITY_ROLES.includes(currentUser.role) &&
+      ownerId !== currentUser.userId
+    ) {
+      throw new ForbiddenException(
+        'Você só pode criar leads atribuídos a você mesmo',
+      );
+    }
+
     await this.assertOwnerBelongsToTenant(ownerId, currentUser.tenantId);
 
     const lead = await this.leadsRepository.create({
@@ -96,11 +138,26 @@ export class LeadsService {
       metadata: { leadId: lead.id },
     });
 
+    await this.auditService.record({
+      tenantId: currentUser.tenantId,
+      userId: currentUser.userId,
+      action: 'LEAD_CREATED',
+      entity: 'Lead',
+      entityId: lead.id,
+      newValue: { ownerId, commercialStatus: lead.commercialStatus },
+    });
+
     return lead;
   }
 
   async update(id: string, dto: UpdateLeadDto, currentUser: AuthenticatedUser) {
     const lead = await this.findOne(id, currentUser);
+
+    if (dto.ownerId && !FULL_VISIBILITY_ROLES.includes(currentUser.role)) {
+      throw new ForbiddenException(
+        'Apenas administradores e gestores podem reatribuir leads',
+      );
+    }
 
     if (dto.ownerId) {
       await this.assertOwnerBelongsToTenant(dto.ownerId, currentUser.tenantId);
@@ -125,6 +182,16 @@ export class LeadsService {
         message: `Novo status: ${dto.commercialStatus}`,
         metadata: { leadId: id },
       });
+
+      await this.auditService.record({
+        tenantId: currentUser.tenantId,
+        userId: currentUser.userId,
+        action: 'LEAD_STATUS_CHANGED',
+        entity: 'Lead',
+        entityId: id,
+        oldValue: { commercialStatus: lead.commercialStatus },
+        newValue: { commercialStatus: dto.commercialStatus },
+      });
     }
 
     if (dto.ownerId && dto.ownerId !== lead.ownerId) {
@@ -134,6 +201,16 @@ export class LeadsService {
         type: 'LEAD_ASSIGNED',
         title: 'Um lead foi atribuído a você',
         metadata: { leadId: id },
+      });
+
+      await this.auditService.record({
+        tenantId: currentUser.tenantId,
+        userId: currentUser.userId,
+        action: 'LEAD_REASSIGNED',
+        entity: 'Lead',
+        entityId: id,
+        oldValue: { ownerId: lead.ownerId },
+        newValue: { ownerId: dto.ownerId },
       });
     }
 

@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { randomUUID } from 'crypto';
 import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -53,6 +54,17 @@ import { QueueModule } from './queue/queue.module';
           process.env.NODE_ENV === 'production'
             ? undefined
             : { target: 'pino-pretty', options: { singleLine: true } },
+        // Correlaciona logs de uma mesma requisição e devolve o id ao
+        // cliente — facilita rastrear um erro reportado até seus logs.
+        genReqId: (req, res) => {
+          const existingId = req.headers['x-request-id'];
+          const id =
+            (Array.isArray(existingId) ? existingId[0] : existingId) ??
+            randomUUID();
+          res.setHeader('X-Request-Id', id);
+          return id;
+        },
+        redact: ['req.headers.authorization', 'req.headers.cookie'],
       },
     }),
     ThrottlerModule.forRoot({
@@ -62,6 +74,10 @@ import { QueueModule } from './queue/queue.module';
           limit: parseInt(process.env.THROTTLE_LIMIT ?? '100', 10),
         },
       ],
+      // Em teste, os specs de segurança criam várias empresas em sequência
+      // rápida a partir do mesmo IP — o rate limit é uma preocupação de
+      // runtime real, não de suíte de testes.
+      skipIf: () => process.env.NODE_ENV === 'test',
     }),
     ScheduleModule.forRoot(),
     PrismaModule,

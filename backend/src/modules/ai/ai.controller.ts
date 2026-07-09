@@ -9,6 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user.interface';
 import { AiService } from './ai.service';
@@ -18,6 +19,8 @@ import { QueryAiHistoryDto } from './dto/query-ai-history.dto';
 
 @ApiTags('ai')
 @ApiBearerAuth()
+/** Chamadas de IA custam créditos da OpenAI — limite mais estrito que o padrão. */
+@Throttle({ default: { limit: 20, ttl: 60_000 } })
 @Controller('ai')
 export class AiController {
   constructor(private readonly aiService: AiService) {}

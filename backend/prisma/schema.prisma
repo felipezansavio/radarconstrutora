@@ -38,6 +38,7 @@ model Tenant {
   notifications Notification[]
   aiInteractions AiInteraction[]
   tasks          Task[]
+  auditLogs      AuditLog[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -70,9 +71,13 @@ model User {
   refreshTokens RefreshToken[]
   aiInteractions AiInteraction[]
   tasksAssigned  Task[]        @relation("TaskAssignee")
+  auditLogs      AuditLog[]
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  /// Exclusão lógica: usuários removidos ficam marcados em vez de
+  /// apagados, preservando o histórico de auditoria e CRM associado.
+  deletedAt DateTime? @map("deleted_at")
 
   @@index([tenantId])
   @@map("users")
@@ -109,8 +114,9 @@ model Company {
   leads        Lead[]
   aiInteractions AiInteraction[]
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   @@index([city, state])
   @@map("companies")
@@ -179,8 +185,9 @@ model Development {
   leads          Lead[]
   aiInteractions AiInteraction[]
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   @@index([companyId])
   @@index([city, state])
@@ -429,11 +436,50 @@ model Task {
   dueAt       DateTime  @map("due_at")
   completedAt DateTime? @map("completed_at")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   @@index([tenantId])
   @@index([tenantId, dueAt])
   @@index([leadId])
   @@map("tasks")
+}
+
+// ---------------------------------------------------------------------------
+// Auditoria (Parte 12): rastreabilidade de logins e alterações sensíveis
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id String @id @default(uuid())
+
+  /// Nulo apenas para eventos de sistema sem empresa associada (raro).
+  tenantId String? @map("tenant_id")
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  /// Nulo para tentativas de login com e-mail que não corresponde a
+  /// nenhum usuário — preservado mesmo se o usuário for removido depois.
+  userId String? @map("user_id")
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /// Ex.: "LOGIN", "LOGIN_FAILED", "LOGOUT", "LEAD_CREATED",
+  /// "LEAD_STATUS_CHANGED", "USER_ROLE_CHANGED".
+  action String
+
+  /// Ex.: "User", "Lead", "Task", "Session".
+  entity   String
+  entityId String? @map("entity_id")
+
+  oldValue Json? @map("old_value")
+  newValue Json? @map("new_value")
+
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, createdAt])
+  @@index([entity, entityId])
+  @@index([userId])
+  @@map("audit_logs")
 }

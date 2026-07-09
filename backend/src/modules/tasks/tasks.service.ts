@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { AuditService } from '../audit/audit.service';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user.interface';
 import { LeadsRepository } from '../leads/repositories/leads.repository';
 import { UsersRepository } from '../users/repositories/users.repository';
@@ -7,21 +12,31 @@ import { QueryTasksDto } from './dto/query-tasks.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksRepository } from './repositories/tasks.repository';
 
+/** Perfis com visão completa das tarefas da empresa (não só as próprias). */
+const FULL_VISIBILITY_ROLES = ['ADMIN', 'GESTOR'];
+
 @Injectable()
 export class TasksService {
   constructor(
     private readonly tasksRepository: TasksRepository,
     private readonly leadsRepository: LeadsRepository,
     private readonly usersRepository: UsersRepository,
+    private readonly auditService: AuditService,
   ) {}
 
   findAll(query: QueryTasksDto, currentUser: AuthenticatedUser) {
+    // Um vendedor só enxerga as próprias tarefas — mesmo que tente
+    // filtrar por assigneeId de outra pessoa, o filtro é sobrescrito.
+    const assigneeId = FULL_VISIBILITY_ROLES.includes(currentUser.role)
+      ? query.assigneeId
+      : currentUser.userId;
+
     return this.tasksRepository.findMany({
       tenantId: currentUser.tenantId,
       from: query.from ? new Date(query.from) : undefined,
       to: query.to ? new Date(query.to) : undefined,
       leadId: query.leadId,
-      assigneeId: query.assigneeId,
+      assigneeId,
       type: query.type,
       completed: query.completed,
     });
@@ -34,7 +49,23 @@ export class TasksService {
       throw new NotFoundException('Tarefa não encontrada');
     }
 
+    this.assertCanAccessTask(task.assigneeId, currentUser);
+
     return task;
+  }
+
+  private assertCanAccessTask(
+    assigneeId: string | null,
+    currentUser: AuthenticatedUser,
+  ) {
+    if (
+      !FULL_VISIBILITY_ROLES.includes(currentUser.role) &&
+      assigneeId !== currentUser.userId
+    ) {
+      throw new ForbiddenException(
+        'Você só pode acessar tarefas atribuídas a você',
+      );
+    }
   }
 
   private async assertLeadBelongsToTenant(leadId: string, tenantId: string) {
@@ -60,9 +91,19 @@ export class TasksService {
     }
 
     const assigneeId = dto.assigneeId ?? currentUser.userId;
+
+    if (
+      !FULL_VISIBILITY_ROLES.includes(currentUser.role) &&
+      assigneeId !== currentUser.userId
+    ) {
+      throw new ForbiddenException(
+        'Você só pode criar tarefas atribuídas a você mesmo',
+      );
+    }
+
     await this.assertAssigneeBelongsToTenant(assigneeId, currentUser.tenantId);
 
-    return this.tasksRepository.create({
+    const task = await this.tasksRepository.create({
       tenant: { connect: { id: currentUser.tenantId } },
       lead: dto.leadId ? { connect: { id: dto.leadId } } : undefined,
       assignee: { connect: { id: assigneeId } },
@@ -71,10 +112,27 @@ export class TasksService {
       notes: dto.notes,
       dueAt: new Date(dto.dueAt),
     });
+
+    await this.auditService.record({
+      tenantId: currentUser.tenantId,
+      userId: currentUser.userId,
+      action: 'TASK_CREATED',
+      entity: 'Task',
+      entityId: task.id,
+      newValue: { title: task.title, assigneeId, dueAt: task.dueAt },
+    });
+
+    return task;
   }
 
   async update(id: string, dto: UpdateTaskDto, currentUser: AuthenticatedUser) {
-    await this.findOne(id, currentUser);
+    const task = await this.findOne(id, currentUser);
+
+    if (dto.assigneeId && !FULL_VISIBILITY_ROLES.includes(currentUser.role)) {
+      throw new ForbiddenException(
+        'Apenas administradores e gestores podem reatribuir tarefas',
+      );
+    }
 
     if (dto.assigneeId) {
       await this.assertAssigneeBelongsToTenant(
@@ -83,7 +141,7 @@ export class TasksService {
       );
     }
 
-    return this.tasksRepository.update(id, {
+    const updated = await this.tasksRepository.update(id, {
       title: dto.title,
       type: dto.type,
       dueAt: dto.dueAt ? new Date(dto.dueAt) : undefined,
@@ -98,10 +156,39 @@ export class TasksService {
             ? new Date()
             : null,
     });
+
+    await this.auditService.record({
+      tenantId: currentUser.tenantId,
+      userId: currentUser.userId,
+      action: 'TASK_UPDATED',
+      entity: 'Task',
+      entityId: id,
+      oldValue: {
+        title: task.title,
+        assigneeId: task.assigneeId,
+        completedAt: task.completedAt,
+      },
+      newValue: {
+        title: updated.title,
+        assigneeId: updated.assigneeId,
+        completedAt: updated.completedAt,
+      },
+    });
+
+    return updated;
   }
 
   async remove(id: string, currentUser: AuthenticatedUser) {
-    await this.findOne(id, currentUser);
-    return this.tasksRepository.delete(id);
+    const task = await this.findOne(id, currentUser);
+    await this.tasksRepository.softDelete(id);
+
+    await this.auditService.record({
+      tenantId: currentUser.tenantId,
+      userId: currentUser.userId,
+      action: 'TASK_DELETED',
+      entity: 'Task',
+      entityId: id,
+      oldValue: { title: task.title, assigneeId: task.assigneeId },
+    });
   }
 }

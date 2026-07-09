@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { TaskType } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { IsBoolean, IsDateString, IsEnum, IsOptional } from 'class-validator';
 import { IsUuidLike } from '../../../common/validators/is-uuid-like.decorator';
 
@@ -32,7 +32,7 @@ export class QueryTasksDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   completed?: boolean;
 }

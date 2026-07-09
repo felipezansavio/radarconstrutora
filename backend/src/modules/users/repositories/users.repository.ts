@@ -8,15 +8,20 @@ export class UsersRepository {
 
   findManyByTenant(tenantId: string): Promise<User[]> {
     return this.prisma.user.findMany({
-      where: { tenantId },
+      where: { tenantId, deletedAt: null },
       orderBy: { name: 'asc' },
     });
   }
 
   findById(id: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { id } });
+    return this.prisma.user.findFirst({ where: { id, deletedAt: null } });
   }
 
+  /**
+   * Inclui usuários removidos de propósito: o e-mail permanece único no
+   * banco mesmo após a exclusão lógica, então o cadastro/login precisam
+   * enxergar o registro para dar a mensagem de erro correta.
+   */
   findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
   }
@@ -29,7 +34,11 @@ export class UsersRepository {
     return this.prisma.user.update({ where: { id }, data });
   }
 
-  delete(id: string): Promise<User> {
-    return this.prisma.user.delete({ where: { id } });
+  /** Exclusão lógica — preserva o histórico de CRM e auditoria do usuário. */
+  softDelete(id: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 }

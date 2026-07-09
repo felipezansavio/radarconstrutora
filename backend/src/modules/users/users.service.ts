@@ -5,17 +5,22 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
+import { AuditService } from '../audit/audit.service';
+import { RefreshTokensRepository } from '../auth/repositories/refresh-tokens.repository';
+import { BCRYPT_SALT_ROUNDS } from '../../common/constants/security.constants';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UsersRepository } from './repositories/users.repository';
 
-const SALT_ROUNDS = 10;
-
 @Injectable()
 export class UsersService {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    private readonly refreshTokensRepository: RefreshTokensRepository,
+    private readonly auditService: AuditService,
+  ) {}
 
   async findAllForTenant(tenantId: string): Promise<UserResponseDto[]> {
     const users = await this.usersRepository.findManyByTenant(tenantId);
@@ -35,7 +40,7 @@ export class UsersService {
       throw new ConflictException('Já existe um usuário com este e-mail');
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
 
     const user = await this.usersRepository.create({
       name: dto.name,
@@ -43,6 +48,15 @@ export class UsersService {
       passwordHash,
       role: dto.role ?? 'VENDEDOR',
       tenant: { connect: { id: currentUser.tenantId } },
+    });
+
+    await this.auditService.record({
+      tenantId: currentUser.tenantId,
+      userId: currentUser.userId,
+      action: 'USER_CREATED',
+      entity: 'User',
+      entityId: user.id,
+      newValue: { name: user.name, email: user.email, role: user.role },
     });
 
     return UserResponseDto.fromEntity(user);
@@ -92,6 +106,21 @@ export class UsersService {
       role: dto.role,
     });
 
+    if (dto.role && dto.role !== target.role) {
+      await this.auditService.record({
+        tenantId: currentUser.tenantId,
+        userId: currentUser.userId,
+        action: 'USER_ROLE_CHANGED',
+        entity: 'User',
+        entityId: id,
+        oldValue: { role: target.role },
+        newValue: { role: dto.role },
+      });
+
+      // Perfis alterados forçam um novo login em todas as sessões ativas.
+      await this.refreshTokensRepository.revokeAllForUser(id);
+    }
+
     return UserResponseDto.fromEntity(updated);
   }
 
@@ -106,6 +135,16 @@ export class UsersService {
       throw new ForbiddenException('Você não pode remover sua própria conta');
     }
 
-    await this.usersRepository.delete(id);
+    await this.usersRepository.softDelete(id);
+    await this.refreshTokensRepository.revokeAllForUser(id);
+
+    await this.auditService.record({
+      tenantId: currentUser.tenantId,
+      userId: currentUser.userId,
+      action: 'USER_DELETED',
+      entity: 'User',
+      entityId: id,
+      oldValue: { name: target.name, email: target.email, role: target.role },
+    });
   }
 }

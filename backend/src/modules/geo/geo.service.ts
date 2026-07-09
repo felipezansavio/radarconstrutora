@@ -80,7 +80,8 @@ export class GeoService {
           ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography
         ) / 1000 AS "distanceKm"
       FROM companies
-      WHERE location IS NOT NULL
+      WHERE deleted_at IS NULL
+        AND location IS NOT NULL
         AND ST_DWithin(
           location,
           ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography,
@@ -168,7 +169,9 @@ export class GeoService {
         ) / 1000 AS "distanceKm"
       FROM developments d
       JOIN companies c ON c.id = d.company_id
-      WHERE d.location IS NOT NULL
+      WHERE d.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+        AND d.location IS NOT NULL
         AND ST_DWithin(
           d.location,
           ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography,

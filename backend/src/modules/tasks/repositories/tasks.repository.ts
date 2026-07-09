@@ -30,6 +30,7 @@ export class TasksRepository {
   findMany(options: FindManyTasksOptions) {
     const where: Prisma.TaskWhereInput = {
       tenantId: options.tenantId,
+      deletedAt: null,
       leadId: options.leadId,
       assigneeId: options.assigneeId,
       type: options.type,
@@ -53,8 +54,8 @@ export class TasksRepository {
   }
 
   findById(id: string) {
-    return this.prisma.task.findUnique({
-      where: { id },
+    return this.prisma.task.findFirst({
+      where: { id, deletedAt: null },
       include: taskInclude,
     });
   }
@@ -71,7 +72,11 @@ export class TasksRepository {
     });
   }
 
-  delete(id: string) {
-    return this.prisma.task.delete({ where: { id } });
+  /** Exclusão lógica — preserva o histórico de auditoria da tarefa. */
+  softDelete(id: string) {
+    return this.prisma.task.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 }

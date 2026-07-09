@@ -5,8 +5,10 @@ import {
   IsEnum,
   IsNotEmpty,
   IsOptional,
-  MinLength,
+  IsStrongPassword,
+  MaxLength,
 } from 'class-validator';
+import { MAX_PASSWORD_LENGTH } from '../../../common/constants/security.constants';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'Carla Vendas' })
@@ -18,7 +20,22 @@ export class CreateUserDto {
   email!: string;
 
   @ApiProperty({ example: 'SenhaForte123!' })
-  @MinLength(8, { message: 'A senha deve ter ao menos 8 caracteres' })
+  @MaxLength(MAX_PASSWORD_LENGTH, {
+    message: `A senha deve ter no máximo ${MAX_PASSWORD_LENGTH} caracteres`,
+  })
+  @IsStrongPassword(
+    {
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 0,
+    },
+    {
+      message:
+        'A senha deve ter ao menos 8 caracteres, incluindo letra maiúscula, minúscula e número',
+    },
+  )
   password!: string;
 
   @ApiPropertyOptional({ enum: UserRole, default: 'VENDEDOR' })

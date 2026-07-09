@@ -11,7 +11,6 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { QueryProjectsDto } from './dto/query-projects.dto';
@@ -24,14 +23,12 @@ import { ProjectsService } from './projects.service';
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
-  @Public()
   @Get()
   @ApiOperation({ summary: 'Lista empreendimentos com filtros e paginação' })
   findAll(@Query() query: QueryProjectsDto) {
     return this.projectsService.findAll(query);
   }
 
-  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Busca um empreendimento pelo id' })
   findOne(@Param('id') id: string) {

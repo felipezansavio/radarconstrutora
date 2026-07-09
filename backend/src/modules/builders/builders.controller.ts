@@ -11,7 +11,6 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { BuildersService } from './builders.service';
 import { CreateBuilderDto } from './dto/create-builder.dto';
@@ -24,14 +23,12 @@ import { UpdateBuilderDto } from './dto/update-builder.dto';
 export class BuildersController {
   constructor(private readonly buildersService: BuildersService) {}
 
-  @Public()
   @Get()
   @ApiOperation({ summary: 'Lista construtoras com filtros e paginação' })
   findAll(@Query() query: QueryBuildersDto) {
     return this.buildersService.findAll(query);
   }
 
-  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Busca uma construtora pelo id' })
   findOne(@Param('id') id: string) {

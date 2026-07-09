@@ -31,6 +31,7 @@ export class ProjectsRepository {
     options: Omit<FindManyProjectsOptions, 'skip' | 'take'>,
   ): Prisma.DevelopmentWhereInput {
     return {
+      deletedAt: null,
       companyId: options.companyId,
       status: options.status,
       standard: options.standard,
@@ -62,8 +63,8 @@ export class ProjectsRepository {
   }
 
   findById(id: string): Promise<Development | null> {
-    return this.prisma.development.findUnique({
-      where: { id },
+    return this.prisma.development.findFirst({
+      where: { id, deletedAt: null },
       include: projectInclude,
     });
   }
@@ -83,7 +84,11 @@ export class ProjectsRepository {
     });
   }
 
-  delete(id: string): Promise<Development> {
-    return this.prisma.development.delete({ where: { id } });
+  /** Exclusão lógica — preserva leads e histórico de IA associados. */
+  softDelete(id: string): Promise<Development> {
+    return this.prisma.development.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 }

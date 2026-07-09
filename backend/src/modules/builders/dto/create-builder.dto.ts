@@ -9,6 +9,7 @@ import {
   IsString,
   IsUrl,
 } from 'class-validator';
+import { IsCnpj } from '../../../common/validators/is-cnpj.decorator';
 
 export class CreateBuilderDto {
   @ApiProperty({ example: 'Construtora Horizonte Ltda' })
@@ -16,9 +17,9 @@ export class CreateBuilderDto {
   @IsString()
   name!: string;
 
-  @ApiPropertyOptional({ example: '11.111.111/0001-11' })
+  @ApiPropertyOptional({ example: '11.444.777/0001-61' })
   @IsOptional()
-  @IsString()
+  @IsCnpj({ message: 'Informe um CNPJ válido' })
   cnpj?: string;
 
   @ApiPropertyOptional({ example: '+55 11 3000-1111' })
