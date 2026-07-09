@@ -29,6 +29,9 @@ COPY --from=build --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=build --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=build --chown=nestjs:nodejs /app/package.json ./package.json
 COPY --from=build --chown=nestjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+# tsconfig.json é lido pelo ts-node ao rodar "prisma db seed" no container
+# (prisma/seed.ts não faz parte do build compilado em dist/).
+COPY --from=build --chown=nestjs:nodejs /app/tsconfig.json ./tsconfig.json
 
 USER nestjs
 EXPOSE 3001
