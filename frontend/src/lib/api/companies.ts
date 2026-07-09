@@ -7,6 +7,11 @@ export interface UpdateCompanyPayload {
   email?: string;
   phone?: string;
   website?: string;
+  alertsEnabled?: boolean;
+  monitoringLatitude?: number;
+  monitoringLongitude?: number;
+  monitoringRadiusKm?: number;
+  whatsappNumber?: string;
 }
 
 export const companiesApi = {

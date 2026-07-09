@@ -3,6 +3,7 @@ import type {
   DevelopmentStandard,
   LeadStatus,
   LeadTemperature,
+  NotificationType,
   PropertyType,
   UserRole,
 } from "@/types/api";
@@ -59,4 +60,13 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: "Administrador",
   GESTOR: "Gestor",
   VENDEDOR: "Vendedor",
+};
+
+export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
+  LEAD_ASSIGNED: "Lead atribuído",
+  LEAD_STATUS_CHANGED: "Status de lead",
+  LEAD_CREATED: "Novo lead",
+  INTERACTION_CREATED: "Nova interação",
+  OPPORTUNITY_NEARBY: "Oportunidade",
+  SYSTEM: "Sistema",
 };

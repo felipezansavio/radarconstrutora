@@ -39,6 +39,24 @@ export default () => ({
     realEstatePortalBaseUrl: process.env.REAL_ESTATE_PORTAL_BASE_URL,
   },
 
+  mail: {
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT ?? '587', 10),
+    user: process.env.SMTP_USER,
+    password: process.env.SMTP_PASSWORD,
+    from: process.env.SMTP_FROM ?? 'Radar Construtora IA <alertas@radar.local>',
+    secure: process.env.SMTP_SECURE === 'true',
+  },
+
+  whatsapp: {
+    apiUrl: process.env.WHATSAPP_API_URL,
+    apiToken: process.env.WHATSAPP_API_TOKEN,
+  },
+
+  alerts: {
+    cronExpression: process.env.ALERTS_CRON_EXPRESSION ?? '0 6 * * *',
+  },
+
   throttle: {
     ttl: parseInt(process.env.THROTTLE_TTL ?? '60', 10),
     limit: parseInt(process.env.THROTTLE_LIMIT ?? '100', 10),

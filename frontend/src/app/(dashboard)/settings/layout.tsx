@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { label: "Equipe", href: "/settings/team" },
+  { label: "Alertas", href: "/settings/alerts" },
   { label: "Integrações", href: "/settings/integrations" },
   { label: "Plano e cobrança", href: "/settings/billing" },
 ];

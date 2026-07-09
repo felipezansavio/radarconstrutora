@@ -31,6 +31,18 @@ export const envSchema = z.object({
   REAL_ESTATE_PORTAL_API_KEY: z.string().optional(),
   REAL_ESTATE_PORTAL_BASE_URL: z.string().optional(),
 
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
+  SMTP_SECURE: z.string().optional(),
+
+  WHATSAPP_API_URL: z.string().optional(),
+  WHATSAPP_API_TOKEN: z.string().optional(),
+
+  ALERTS_CRON_EXPRESSION: z.string().optional(),
+
   THROTTLE_TTL: z.coerce.number().default(60),
   THROTTLE_LIMIT: z.coerce.number().default(100),
 });

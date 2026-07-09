@@ -23,6 +23,15 @@ model Tenant {
   phone   String?
   website String?
 
+  /// Monitoramento automático de oportunidades (Parte 11): ponto de
+  /// referência (a própria empresa) usado pelo job diário para buscar
+  /// novos empreendimentos próximos.
+  alertsEnabled       Boolean @default(true) @map("alerts_enabled")
+  monitoringLatitude  Float?  @map("monitoring_latitude")
+  monitoringLongitude Float?  @map("monitoring_longitude")
+  monitoringRadiusKm  Float   @default(10) @map("monitoring_radius_km")
+  whatsappNumber      String? @map("whatsapp_number")
+
   users         User[]
   leads         Lead[]
   searches      Search[]
@@ -297,6 +306,7 @@ enum NotificationType {
   LEAD_STATUS_CHANGED
   LEAD_CREATED
   INTERACTION_CREATED
+  OPPORTUNITY_NEARBY
   SYSTEM
 
   @@map("notification_type")

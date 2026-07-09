@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
@@ -19,6 +20,7 @@ import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './database/prisma.module';
 import { HealthModule } from './health/health.module';
 import { AiModule } from './modules/ai/ai.module';
+import { AlertsModule } from './modules/alerts/alerts.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BillingModule } from './modules/billing/billing.module';
@@ -27,6 +29,7 @@ import { CompaniesModule } from './modules/companies/companies.module';
 import { CrmModule } from './modules/crm/crm.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { LeadsModule } from './modules/leads/leads.module';
+import { MailModule } from './modules/mail/mail.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { ReportsModule } from './modules/reports/reports.module';
@@ -60,6 +63,7 @@ import { QueueModule } from './queue/queue.module';
         },
       ],
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     QueueModule,
     HealthModule,
@@ -76,6 +80,8 @@ import { QueueModule } from './queue/queue.module';
     AiModule,
     NotificationsModule,
     IngestionModule,
+    MailModule,
+    AlertsModule,
     BillingModule,
     ReportsModule,
     AuditModule,

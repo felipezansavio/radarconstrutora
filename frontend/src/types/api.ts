@@ -38,6 +38,7 @@ export type NotificationType =
   | "LEAD_STATUS_CHANGED"
   | "LEAD_CREATED"
   | "INTERACTION_CREATED"
+  | "OPPORTUNITY_NEARBY"
   | "SYSTEM";
 
 export type AiInteractionType =
@@ -82,6 +83,11 @@ export interface Company {
   email: string | null;
   phone: string | null;
   website: string | null;
+  alertsEnabled: boolean;
+  monitoringLatitude: number | null;
+  monitoringLongitude: number | null;
+  monitoringRadiusKm: number;
+  whatsappNumber: string | null;
   createdAt: string;
   updatedAt: string;
 }
