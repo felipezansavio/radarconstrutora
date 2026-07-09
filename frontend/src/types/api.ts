@@ -330,6 +330,12 @@ export interface IngestionSourceStatus {
   description: string;
 }
 
+export interface ImportDiscoveredResult {
+  discovered: number;
+  imported: number;
+  skipped: number;
+}
+
 export interface CompanyAnalysisResult {
   resumoComercial: string;
   potencialCompra: "ALTO" | "MEDIO" | "BAIXO";

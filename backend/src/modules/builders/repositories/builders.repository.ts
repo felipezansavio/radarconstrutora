@@ -70,6 +70,14 @@ export class BuildersRepository {
     return this.prisma.company.findUnique({ where: { cnpj } });
   }
 
+  /** Usado para evitar duplicar construtoras já catalogadas ao importar candidatos descobertos. */
+  async existsByName(name: string): Promise<boolean> {
+    const count = await this.prisma.company.count({
+      where: { name: { equals: name, mode: 'insensitive' }, deletedAt: null },
+    });
+    return count > 0;
+  }
+
   create(data: Prisma.CompanyCreateInput): Promise<Company> {
     return this.prisma.company.create({ data });
   }

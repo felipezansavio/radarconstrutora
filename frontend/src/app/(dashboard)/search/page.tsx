@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Landmark, LocateFixed, SearchIcon } from "lucide-react";
+import { Building2, Landmark, LocateFixed, SearchIcon, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 import { RadiusSelector } from "@/components/search/radius-selector";
 import {
@@ -35,15 +36,21 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { useImportOpportunities } from "@/hooks/use-ingestion";
 import { useLocationSearch } from "@/hooks/use-location-search";
 import { useRadiusSearch } from "@/hooks/use-search";
+import { ApiError } from "@/lib/api/client";
 import { CONSTRUCTION_STATUS_LABELS } from "@/lib/labels";
+import { useAuthStore } from "@/stores/auth-store";
 import type { ConstructionStatus } from "@/types/api";
 
 type PropertyFilter = "all" | "RESIDENTIAL" | "COMMERCIAL";
 type ResultType = "all" | "builders" | "projects";
 
 export default function SearchPage() {
+  const role = useAuthStore((s) => s.user?.role);
+  const canImport = role === "ADMIN" || role === "GESTOR";
+
   const {
     city,
     setCity,
@@ -66,13 +73,15 @@ export default function SearchPage() {
   const [minFloors, setMinFloors] = useState("");
   const [status, setStatus] = useState<ConstructionStatus | "all">("all");
   const [resultType, setResultType] = useState<ResultType>("all");
+  const [lastLocation, setLastLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   const radiusSearch = useRadiusSearch();
+  const importOpportunities = useImportOpportunities();
 
-  async function handleSearch() {
-    const location = await resolveCoordinates();
-    if (!location) return;
-
+  async function runSearch(location: { latitude: number; longitude: number }) {
     radiusSearch.mutate({
       latitude: location.latitude,
       longitude: location.longitude,
@@ -83,6 +92,43 @@ export default function SearchPage() {
       standard: highEndOnly ? "HIGH_END" : undefined,
       minFloors: minFloors ? Number(minFloors) : undefined,
     });
+  }
+
+  async function handleSearch() {
+    const location = await resolveCoordinates();
+    if (!location) return;
+
+    setLastLocation(location);
+    await runSearch(location);
+  }
+
+  function handleImportNearby() {
+    if (!lastLocation) return;
+
+    importOpportunities.mutate(
+      { ...lastLocation, radiusKm },
+      {
+        onSuccess: (result) => {
+          if (result.imported === 0) {
+            toast.info(
+              `Busca concluída: ${result.discovered} candidato(s) encontrado(s), nenhuma construtora nova pra cadastrar.`,
+            );
+          } else {
+            toast.success(
+              `${result.imported} nova(s) construtora(s) cadastrada(s)! Atualizando resultados...`,
+            );
+          }
+          if (lastLocation) void runSearch(lastLocation);
+        },
+        onError: (err) => {
+          const message =
+            err instanceof ApiError
+              ? err.message
+              : "Não foi possível buscar construtoras reais agora.";
+          toast.error(message);
+        },
+      },
+    );
   }
 
   const results = radiusSearch.data;
@@ -275,9 +321,24 @@ export default function SearchPage() {
 
           {results && (
             <div className="space-y-6">
-              <p className="text-muted-foreground text-sm">
-                {results.resultsCount} resultado(s) encontrado(s)
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-muted-foreground text-sm">
+                  {results.resultsCount} resultado(s) encontrado(s)
+                </p>
+                {canImport && lastLocation && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleImportNearby}
+                    disabled={importOpportunities.isPending}
+                  >
+                    <Sparkles />
+                    {importOpportunities.isPending
+                      ? "Buscando construtoras reais..."
+                      : "Buscar construtoras reais (Google Places)"}
+                  </Button>
+                )}
+              </div>
 
               {resultType !== "projects" && results.builders && (
                 <div>
@@ -289,6 +350,11 @@ export default function SearchPage() {
                     <EmptyState
                       icon={Landmark}
                       title="Nenhuma construtora encontrada nesse raio"
+                      description={
+                        canImport
+                          ? 'Clique em "Buscar construtoras reais" acima para consultar o Google Places e cadastrar novas construtoras encontradas perto daqui.'
+                          : undefined
+                      }
                     />
                   ) : (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

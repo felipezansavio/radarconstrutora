@@ -1,7 +1,9 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user.interface';
 import { DiscoverQueryDto } from './dto/discover-query.dto';
 import { IngestionService } from './ingestion.service';
 
@@ -30,5 +32,18 @@ export class IngestionController {
   })
   discover(@Query() query: DiscoverQueryDto) {
     return this.ingestionService.discoverAll(query);
+  }
+
+  @Post('import')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({
+    summary:
+      'Busca construtoras via fontes externas (Google Places) e cadastra as que ainda não estão no catálogo',
+  })
+  import(
+    @Body() dto: DiscoverQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.ingestionService.importDiscovered(dto, user);
   }
 }
