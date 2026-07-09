@@ -1,16 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { Building2, LocateFixed, MapPinned, SearchIcon } from "lucide-react";
+import { Building2, LocateFixed, SearchIcon } from "lucide-react";
 
 import { MapLegend } from "@/components/map/map-legend";
 import { MapMarkerDetailSheet } from "@/components/map/map-marker-detail-sheet";
-import {
-  isMapboxConfigured,
-  MapboxMap,
-  type MapMarker,
-} from "@/components/map/mapbox-map";
+import { MapView, type MapMarker } from "@/components/map/map-view";
 import { RadiusSelector } from "@/components/search/radius-selector";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
@@ -282,18 +277,7 @@ export default function MapPage() {
         </Card>
 
         <div className="flex flex-1 flex-col gap-3 overflow-hidden">
-          {!isMapboxConfigured ? (
-            <EmptyState
-              icon={MapPinned}
-              title="Mapa não configurado"
-              description="Defina NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN nas variáveis de ambiente do frontend para habilitar o mapa interativo."
-              action={
-                <Button variant="outline" asChild>
-                  <Link href="/settings/integrations">Ver integrações</Link>
-                </Button>
-              }
-            />
-          ) : radiusSearch.isPending ? (
+          {radiusSearch.isPending ? (
             <LoadingState label="Buscando oportunidades..." />
           ) : radiusSearch.isError ? (
             <ErrorState error={radiusSearch.error} />
@@ -314,7 +298,7 @@ export default function MapPage() {
                 <MapLegend />
               </div>
               <div className="flex-1 overflow-hidden rounded-xl border">
-                <MapboxMap
+                <MapView
                   markers={markers}
                   origin={origin}
                   onMarkerClick={setSelectedProjectId}

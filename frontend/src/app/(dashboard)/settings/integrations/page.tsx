@@ -12,12 +12,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIngestionSources } from "@/hooks/use-ingestion";
 
-const mapboxConfigured = Boolean(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN);
-const googleMapsConfigured = Boolean(
-  process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-);
-const mapsConfigured = mapboxConfigured || googleMapsConfigured;
-
 export default function IntegrationsSettingsPage() {
   const { data: sources, isLoading } = useIngestionSources();
 
@@ -35,18 +29,10 @@ export default function IntegrationsSettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {mapsConfigured ? (
-            <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="size-4" />
-              {mapboxConfigured ? "Mapbox" : "Google Maps"} configurado
-            </div>
-          ) : (
-            <div className="text-muted-foreground flex items-center gap-2 text-sm">
-              <XCircle className="size-4" />
-              Não configurado — defina NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ou
-              NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.
-            </div>
-          )}
+          <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="size-4" />
+            OpenStreetMap (gratuito) configurado
+          </div>
         </CardContent>
       </Card>
 

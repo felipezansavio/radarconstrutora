@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import mapboxgl from "mapbox-gl";
+import maplibregl from "maplibre-gl";
 
-import "mapbox-gl/dist/mapbox-gl.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 export interface MapMarker {
   id: string;
@@ -19,13 +19,15 @@ export interface MapOrigin {
   radiusKm?: number;
 }
 
-interface MapboxMapProps {
+interface MapViewProps {
   markers: MapMarker[];
   origin?: MapOrigin | null;
   onMarkerClick?: (id: string) => void;
 }
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+// Estilo vetorial público e gratuito (OpenFreeMap, dados OpenStreetMap) —
+// não exige token, cadastro nem cartão de crédito.
+const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 const RADIUS_SOURCE_ID = "radar-search-radius";
 
 function escapeHtml(value: string): string {
@@ -62,23 +64,22 @@ function createRadiusCircle(
   };
 }
 
-export function MapboxMap({ markers, origin, onMarkerClick }: MapboxMapProps) {
+export function MapView({ markers, origin, onMarkerClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markerRefs = useRef<mapboxgl.Marker[]>([]);
-  const originMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markerRefs = useRef<maplibregl.Marker[]>([]);
+  const originMarkerRef = useRef<maplibregl.Marker | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current || !MAPBOX_TOKEN) return;
+    if (!containerRef.current) return;
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-    const map = new mapboxgl.Map({
+    const map = new maplibregl.Map({
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: MAP_STYLE,
       center: [-46.6333, -23.5505],
       zoom: 10,
     });
-    map.addControl(new mapboxgl.NavigationControl(), "top-right");
+    map.addControl(new maplibregl.NavigationControl(), "top-right");
     mapRef.current = map;
 
     return () => {
@@ -89,17 +90,17 @@ export function MapboxMap({ markers, origin, onMarkerClick }: MapboxMapProps) {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !MAPBOX_TOKEN) return;
+    if (!map) return;
 
     markerRefs.current.forEach((marker) => marker.remove());
     markerRefs.current = [];
 
     if (markers.length === 0 && !origin) return;
 
-    const bounds = new mapboxgl.LngLatBounds();
+    const bounds = new maplibregl.LngLatBounds();
 
     for (const point of markers) {
-      const marker = new mapboxgl.Marker({ color: point.color ?? "#2a78d6" })
+      const marker = new maplibregl.Marker({ color: point.color ?? "#2a78d6" })
         .setLngLat([point.longitude, point.latitude])
         .addTo(map);
 
@@ -112,7 +113,7 @@ export function MapboxMap({ markers, origin, onMarkerClick }: MapboxMapProps) {
         });
       } else {
         marker.setPopup(
-          new mapboxgl.Popup({ offset: 16 }).setHTML(
+          new maplibregl.Popup({ offset: 16 }).setHTML(
             `<div style="font-weight:600;">${escapeHtml(point.label)}</div>`,
           ),
         );
@@ -131,7 +132,7 @@ export function MapboxMap({ markers, origin, onMarkerClick }: MapboxMapProps) {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !MAPBOX_TOKEN) return;
+    if (!map) return;
 
     function syncOrigin() {
       if (!map) return;
@@ -150,10 +151,10 @@ export function MapboxMap({ markers, origin, onMarkerClick }: MapboxMapProps) {
 
       if (!origin) return;
 
-      originMarkerRef.current = new mapboxgl.Marker({ color: "#111827" })
+      originMarkerRef.current = new maplibregl.Marker({ color: "#111827" })
         .setLngLat([origin.longitude, origin.latitude])
         .setPopup(
-          new mapboxgl.Popup({ offset: 16 }).setHTML(
+          new maplibregl.Popup({ offset: 16 }).setHTML(
             "<div style='font-weight:600;'>Ponto de busca</div>",
           ),
         )
@@ -187,11 +188,5 @@ export function MapboxMap({ markers, origin, onMarkerClick }: MapboxMapProps) {
     }
   }, [origin]);
 
-  if (!MAPBOX_TOKEN) {
-    return null;
-  }
-
   return <div ref={containerRef} className="h-full w-full rounded-xl" />;
 }
-
-export const isMapboxConfigured = Boolean(MAPBOX_TOKEN);
